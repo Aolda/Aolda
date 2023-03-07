@@ -1,19 +1,52 @@
-package database
+package main
 
 import (
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/boltdb/bolt"
-	"github.com/fsnotify/fsnotify"
 )
 
-func initDB(db *bolt.DB, err error, dir string) {
-	log.Println("INIT DB")
+func ConvertJS(db *bolt.DB, err error, path string) {
+	fmt.Println("::::: CREATE Database :::::")
+
+	err = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("functions"))
+		if b == nil {
+			log.Println("Bucket not found.")
+			return nil
+		}
+		index := 0
+		b.ForEach(func(k, v []byte) error {
+			//log.Printf(" %d | %s %s\n", index, k, v)
+			file, err := os.Create(path + "/" + string(k))
+			if err != nil {
+				log.Println(err)
+			}
+			defer file.Close()
+
+			_, err = file.Write(v)
+			if err != nil {
+				log.Println(err)
+			}
+
+			index++
+			log.Printf("CREATE %s IN /src\n", string(k))
+			return nil
+		})
+		log.Printf("CREATE %d FILE IN /src\n", index)
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func InitDB(db *bolt.DB, err error, dir string) {
+	fmt.Println("::::: INIT Database :::::")
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		// Create a bucket to store data in.
@@ -51,7 +84,10 @@ func initDB(db *bolt.DB, err error, dir string) {
 	}
 }
 
-func viewAllDB(db *bolt.DB, err error) {
+func ViewAllDB(db *bolt.DB, err error) {
+
+	fmt.Println("::::: VIEW Database :::::")
+
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("functions"))
 		if b == nil {
@@ -74,8 +110,9 @@ func viewAllDB(db *bolt.DB, err error) {
 	}
 }
 
-func updateDB(db *bolt.DB, err error, path string) {
-	log.Println("UODATE DB")
+func UpdateDB(db *bolt.DB, err error, path string) {
+	fmt.Println("::::: UPDATE Database :::::")
+
 	err = db.Update(func(tx *bolt.Tx) error {
 		// Create a bucket to store data in.
 		b, err := tx.CreateBucketIfNotExists([]byte("functions"))
@@ -106,7 +143,7 @@ func updateDB(db *bolt.DB, err error, path string) {
 	}
 }
 
-func Boltdb() {
+func main() {
 	fmt.Println("::::: boltdb Database :::::")
 
 	db, err := bolt.Open("nodeDB.db", 0600, nil)
@@ -115,39 +152,28 @@ func Boltdb() {
 	}
 	defer db.Close()
 
-	dir := "./src"
-	initDB(db, err, dir)
-	viewAllDB(db, err)
+	for {
+		var cmd string
+		fmt.Scanln(&cmd)
 
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			// Watch the directory for changes.
-			watcher, err := fsnotify.NewWatcher()
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer watcher.Close()
-
-			done := make(chan bool)
-			go func() {
-				for {
-					select {
-					case event := <-watcher.Events:
-						updateDB(db, err, event.Name)
-						viewAllDB(db, err)
-					case err := <-watcher.Errors:
-						log.Println("error:", err)
-					}
-				}
-			}()
-
-			err = watcher.Add(path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			<-done
+		switch cmd {
+		case "init":
+			var path string
+			fmt.Print("enter Path : ")
+			fmt.Scanln(&path)
+			InitDB(db, err, path)
+		case "update":
+			var path string
+			fmt.Print("enter Path : ")
+			fmt.Scanln(&path)
+			UpdateDB(db, err, path)
+		case "create":
+			var path string
+			fmt.Print("enter Path : ")
+			fmt.Scanln(&path)
+			ConvertJS(db, err, path)
+		case "view":
+			ViewAllDB(db, err)
 		}
-
-		return nil
-	})
+	}
 }
