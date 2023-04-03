@@ -45,3 +45,4 @@ abigen --abi=./build/AoldaClient.abi --bin=./build/AoldaClient.bin --pkg=aoldaCl
 ```
 
 - 위와 동일 해당 bin파일과 abi를 기반으로 .go 파일 생성
+- https://medium.com/nerd-for-tech/smart-contract-with-golang-d208c92848a9 <-----여기 참고>
