@@ -30,3 +30,16 @@
 - Don't put a period at the end
 - Be used as an imperative and does not use the past tense
 - Explain something and why rather than how
+  
+## go-ethereum
+
+```
+solc --optimize --abi ./contracts/MySmartContract.sol -o build
+solc --optimize --bin ./contracts/MySmartContract.sol -o build
+```
+- ./contracts/MySmartContract.sol 를 로컬 환경에 맞게 고치셈
+  
+```
+abigen --abi=./build/MySmartContract.abi --bin=./build/MySmartContract.bin --pkg=api --out=./api/MySmartContract.go
+```
+- 위와 동일 해당 bin파일과 abi를 기반으로 .go 파일 생성
