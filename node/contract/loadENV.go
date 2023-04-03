@@ -17,7 +17,7 @@ type Config struct {
 }
 
 func LoadENV() Config {
-
+	fmt.Println("loadENV: LoadENV")
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println(err)
