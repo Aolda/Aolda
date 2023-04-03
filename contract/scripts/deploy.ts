@@ -6,7 +6,7 @@ async function main() {
   const aoldaClient = await AoldaClient.deploy();
   await aoldaClient.deployed();
 
-  console.log("aoldaClient : ", aoldaClient.address);
+  console.log("aoldaClient:", aoldaClient.address);
 }
 
 main().catch((error) => {
