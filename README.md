@@ -43,3 +43,4 @@ solc --optimize --bin ./contracts/MySmartContract.sol -o build
 abigen --abi=./build/MySmartContract.abi --bin=./build/MySmartContract.bin --pkg=api --out=./api/MySmartContract.go
 ```
 - 위와 동일 해당 bin파일과 abi를 기반으로 .go 파일 생성
+- https://medium.com/nerd-for-tech/smart-contract-with-golang-d208c92848a9 <-----여기 참고>
