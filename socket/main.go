@@ -21,32 +21,25 @@ func HandleErr(err error) {
 	}
 }
 
-func Splitter(s string, sep string, i int) string {
-	r := strings.Split(s, sep)
-	if len(r)-1 < i {
-		return ""
-	}
-	return r[i]
-}
-
 // === websocket
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 func Upgrade(rw http.ResponseWriter, r *http.Request) {
-	// Port :3000 will upgrade the request from :4000
 	openPort := r.URL.Query().Get("openPort")
-	ip := Splitter(r.RemoteAddr, ":", 0)
+	address := "localhost"
 	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return openPort != "" && ip != ""
+		return openPort != "" && address != ""
 	}
 	conn, err := upgrader.Upgrade(rw, r, nil)
 	HandleErr(err)
-	initPeer(conn, ip, openPort)
+	initPeer(conn, address, openPort)
 }
 
 func AddPeer(address, port, openPort string) {
-	// Port :4000 is requesting an upgrade from the port :3000
 	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
 	HandleErr(err)
 	initPeer(conn, address, port)
@@ -54,20 +47,20 @@ func AddPeer(address, port, openPort string) {
 
 // ==========peer
 type peers struct {
-	v map[string]*peer
+	v map[string]*Peer
 	m sync.Mutex
 }
 
 var Peers peers = peers{
-	v: make(map[string]*peer),
+	v: make(map[string]*Peer),
 }
 
-type peer struct {
-	key     string
-	address string
-	port    string
-	conn    *websocket.Conn
-	inbox   chan []byte
+type Peer struct {
+	Key     string
+	Address string
+	Port    string
+	Conn    *websocket.Conn
+	Inbox   chan []byte
 }
 
 func AllPeers(p *peers) []string {
@@ -80,51 +73,75 @@ func AllPeers(p *peers) []string {
 	return keys
 }
 
-func (p *peer) close() {
+func (p *Peer) close() {
 	Peers.m.Lock()
 	defer Peers.m.Unlock()
-	p.conn.Close()
-	delete(Peers.v, p.key)
+	p.Conn.Close()
+	delete(Peers.v, p.Key)
 }
-func initPeer(conn *websocket.Conn, address, port string) *peer {
+
+func initPeer(conn *websocket.Conn, address, port string) *Peer {
 	key := fmt.Sprintf("%s:%s", address, port)
-	p := &peer{
-		conn:    conn,
-		inbox:   make(chan []byte),
-		address: address,
-		key:     key,
-		port:    port,
+	p := &Peer{
+		Key:     key,
+		Address: address,
+		Port:    port,
+		Conn:    conn,
+		Inbox:   make(chan []byte),
 	}
-	go p.read()
-	go p.write()
+	go p.readListener()
+	go p.writeListener()
 	Peers.v[key] = p
+	p.write()
 	return p
 }
-func (p *peer) write() {
+
+func (p *Peer) write() {
+	var res []byte
+	for i := range Peers.v {
+		address := strings.Split(i, ":")
+		marJson, _ := json.Marshal(struct {
+			Address string
+			Port    string
+		}{
+			Address: address[0],
+			Port:    address[1],
+		})
+		res = append(res, marJson...)
+	}
+	p.Inbox <- res
+}
+
+func (p *Peer) writeListener() {
 	defer p.close()
 	for {
-		m, ok := <-p.inbox
+		m, ok := <-p.Inbox
 		if !ok {
 			break
 		}
-		p.conn.WriteMessage(websocket.TextMessage, m)
+		p.Conn.WriteMessage(websocket.TextMessage, m)
 	}
 }
-func (p *peer) read() {
-	// delete peer in case of error
+
+func (p *Peer) readListener() {
 	defer p.close()
 	for {
-		_, m, err := p.conn.ReadMessage()
+		_, m, err := p.Conn.ReadMessage()
 		if err != nil {
 			break
 		}
-		fmt.Printf("%s", m)
+		fmt.Println("msg : ", string(m))
+		peerList := []Peer{}
+		json.Unmarshal(m, &peerList)
+		for _, v := range peerList {
+			peerPort := fmt.Sprintf(":%s", v.Port)
+			AddPeer(payload.Address, payload.Port, peerPort)
+		}
 	}
 }
 
-// ====== rest
-
 var port string
+var payload addPeerPayload
 
 type addPeerPayload struct {
 	Address, Port string
@@ -136,23 +153,26 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 	})
 }
+
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.RequestURI)
 		next.ServeHTTP(rw, r)
 	})
 }
+
 func peersAPI(rw http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		var payload addPeerPayload
 		json.NewDecoder(r.Body).Decode(&payload)
 		AddPeer(payload.Address, payload.Port, port)
 		rw.WriteHeader(http.StatusOK)
+
 	case "GET":
 		json.NewEncoder(rw).Encode(AllPeers(&Peers))
 	}
 }
+
 func RestStart(aPort int) {
 	port = fmt.Sprintf(":%d", aPort)
 	router := mux.NewRouter()
@@ -167,8 +187,7 @@ func RestStart(aPort int) {
 
 func usage() {
 	fmt.Printf("Please use the following flags:\n\n")
-	fmt.Printf("-port:		Set the PORT of the server\n")
-	fmt.Printf("-mode:		Choose between 'html' and 'rest'\n\n")
+	fmt.Printf("-port:		Set the PORT of the server\n\n")
 	os.Exit(0)
 }
 
@@ -178,16 +197,9 @@ func CliStart() {
 	}
 
 	port := flag.Int("port", 4000, "Set port of the server")
-	mode := flag.String("mode", "rest", "Choose between 'html' and 'rest'")
-
 	flag.Parse()
 
-	switch *mode {
-	case "rest":
-		RestStart(*port)
-	default:
-		usage()
-	}
+	RestStart(*port)
 }
 
 func main() {

@@ -1,4 +1,103 @@
-# Aolda
+# Aolda_dev-p2p
+
+## progress
+
+- [X] 1:1 ws network
+- [X] 1:1 msg read / write
+- [X] 1:n multinode p2p network
+- [ ] 1:n db synchronization
+
+## usage
+
+```
+go run . -port={portNum}
+```
+
+### [POST] {host}/peers
+
+req.body
+```
+{
+    "Address": "localost",
+    "Port": "3000"
+}
+```
+
+해당 node로 연결 요청
+- call AddPeer()
+
+### [GET] {host}/peers
+
+res.body
+```
+[
+    "localhost:3001",
+    "localhost:3002",
+    "localhost:4000"
+]
+```
+
+host node와 연결된 nodes 확인
+- call AllPeers()
+
+## function description
+
+```
+func CliStart()
+```
+- port 번호 입력
+- call RestStart()
+
+```
+func RestStart()
+```
+- set router
+- listening /peers
+- listening /ws
+
+```
+func peersAPI()
+```
+- called by /peers
+- in POST, call AddPeer()
+- in GET, call AllPeers()
+
+```
+func AddPeer()
+```
+- make websocket connection
+- call initPeer()
+
+```
+func AllPeers()
+```
+- return Peers
+
+```
+func initPeer()
+```
+- return connected Peer
+- save connected Peer in Peers
+- call readListener()
+- call writeListener()
+- call write()
+
+```
+func writeListener()
+```
+- write the message for Peers data to All nodes
+
+```
+func readListener()
+```
+- convert msg to JSON/struct Peer
+- call AddPeer() for new Peer data
+
+```
+func write()
+```
+- return Peers data to go channel(writeListener)
+
 
 ## commit message guidline
 
