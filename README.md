@@ -9,6 +9,7 @@
 - [ ] 1:n db synchronization
 - [ ] 1:n msg read / write
 - [ ] Kademlia implement
+- [ ] k8s operation
 
 ## usage
 
