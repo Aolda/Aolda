@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	ip "aloda_node/socket/IPget"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -89,6 +91,7 @@ func initPeer(conn *websocket.Conn, address, port string) *Peer {
 		Conn:    conn,
 		Inbox:   make(chan []byte),
 	}
+	fmt.Println(p.Address)
 	go p.readListener()
 	go p.writeListener()
 	Peers.v[key] = p
@@ -203,5 +206,7 @@ func CliStart() {
 }
 
 func main() {
-	CliStart()
+	//CliStart()
+	ip.GetPublicIp()
+	ip.GetPrivateIp()
 }
