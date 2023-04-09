@@ -5,7 +5,11 @@
 - [X] 1:1 ws network
 - [X] 1:1 msg read / write
 - [X] 1:n multinode p2p network
+- [ ] 1:1 db synchronization
 - [ ] 1:n db synchronization
+- [ ] 1:n msg read / write
+- [ ] Kademlia implement
+- [ ] k8s operation
 
 ## usage
 
@@ -18,7 +22,7 @@ go run . -port={portNum}
 req.body
 ```
 {
-    "Address": "localost",
+    "Address": "localhost",
     "Port": "3000"
 }
 ```
