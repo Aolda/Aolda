@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	ip "aloda_node/socket/IPget"
+	ip "aolda_node/socket/IPget"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
