@@ -30,19 +30,25 @@ var upgrader = websocket.Upgrader{
 
 func Upgrade(rw http.ResponseWriter, r *http.Request) {
 	openPort := r.URL.Query().Get("openPort")
-	address := "localhost"
+	publicAddress := r.Header.Get("X-Real-IP")
+	if publicAddress == "" {
+		publicAddress = r.Header.Get("X-Forwarded-For")
+		if publicAddress == "" {
+			publicAddress = r.RemoteAddr
+		}
+	}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return openPort != "" && address != ""
+		return r.Header.Get("Origin") == "http://"+publicAddress || r.Header.Get("Origin") == "https://"+publicAddress
 	}
 	conn, err := upgrader.Upgrade(rw, r, nil)
 	HandleErr(err)
-	initPeer(conn, address, openPort)
+	initPeer(conn, publicAddress, openPort)
 }
 
-func AddPeer(address, port, openPort string) {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
+func AddPeer(publicAddress, port, openPort string) {
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", publicAddress, port, openPort[1:]), nil)
 	HandleErr(err)
-	initPeer(conn, address, port)
+	initPeer(conn, publicAddress, port)
 }
 
 // ==========peer
@@ -174,14 +180,14 @@ func peersAPI(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RestStart(aPort int) {
+func RestStart(aPort int, publicAddress string) {
 	port = fmt.Sprintf(":%d", aPort)
 	router := mux.NewRouter()
 	router.Use(jsonContentTypeMiddleware, loggerMiddleware)
 	router.HandleFunc("/ws", Upgrade).Methods("GET")
 	router.HandleFunc("/peers", peersAPI).Methods("GET", "POST")
-	fmt.Printf("Listening on http://localhost%s\n", port)
-	log.Fatal(http.ListenAndServe(port, router))
+	fmt.Printf("Listening on http://%s%s\n", publicAddress, port)
+	log.Fatal(http.ListenAndServe(publicAddress+port, router))
 }
 
 // == cli

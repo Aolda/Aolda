@@ -1,7 +1,6 @@
 package ip
 
 import (
-	ip "aolda_node/socket/IPget"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -31,19 +30,25 @@ var upgrader = websocket.Upgrader{
 
 func Upgrade(rw http.ResponseWriter, r *http.Request) {
 	openPort := r.URL.Query().Get("openPort")
-	address := "localhost"
+	publicAddress := r.Header.Get("X-Real-IP")
+	if publicAddress == "" {
+		publicAddress = r.Header.Get("X-Forwarded-For")
+		if publicAddress == "" {
+			publicAddress = r.RemoteAddr
+		}
+	}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return openPort != "" && address != ""
+		return r.Header.Get("Origin") == "http://"+publicAddress || r.Header.Get("Origin") == "https://"+publicAddress
 	}
 	conn, err := upgrader.Upgrade(rw, r, nil)
 	HandleErr(err)
-	initPeer(conn, address, openPort)
+	initPeer(conn, publicAddress, openPort)
 }
 
-func AddPeer(address, port, openPort string) {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
+func AddPeer(publicAddress, port, openPort string) {
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", publicAddress, port, openPort[1:]), nil)
 	HandleErr(err)
-	initPeer(conn, address, port)
+	initPeer(conn, publicAddress, port)
 }
 
 // ==========peer
@@ -175,14 +180,14 @@ func peersAPI(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RestStart(aIP, aPort string) {
-	addr := fmt.Sprintf("%s:%s", aIP, aPort)
+func RestStart(aPort int, publicAddress string) {
+	port = fmt.Sprintf(":%d", aPort)
 	router := mux.NewRouter()
 	router.Use(jsonContentTypeMiddleware, loggerMiddleware)
 	router.HandleFunc("/ws", Upgrade).Methods("GET")
 	router.HandleFunc("/peers", peersAPI).Methods("GET", "POST")
-	fmt.Printf("Listening on http://%s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, router))
+	fmt.Printf("Listening on http://%s%s\n", publicAddress, port)
+	log.Fatal(http.ListenAndServe(publicAddress+port, router))
 }
 
 // == cli
@@ -198,12 +203,9 @@ func CliStart() {
 		usage()
 	}
 
-	ip := ip.GetPublicIp()
-	if ip == "" {
-		ip = ip.GetPrivateIp()
-	}
+	ip := GetPrivateIp()
 	port := flag.Int("port", 4000, "Set port of the server")
 	flag.Parse()
 
-	RestStart(ip, port)
+	RestStart(*port, ip)
 }
