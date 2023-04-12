@@ -30,25 +30,19 @@ var upgrader = websocket.Upgrader{
 
 func Upgrade(rw http.ResponseWriter, r *http.Request) {
 	openPort := r.URL.Query().Get("openPort")
-	publicAddress := r.Header.Get("X-Real-IP")
-	if publicAddress == "" {
-		publicAddress = r.Header.Get("X-Forwarded-For")
-		if publicAddress == "" {
-			publicAddress = r.RemoteAddr
-		}
-	}
+	address := "localhost"
 	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return r.Header.Get("Origin") == "http://"+publicAddress || r.Header.Get("Origin") == "https://"+publicAddress
+		return openPort != "" && address != ""
 	}
 	conn, err := upgrader.Upgrade(rw, r, nil)
 	HandleErr(err)
-	initPeer(conn, publicAddress, openPort)
+	initPeer(conn, address, openPort)
 }
 
-func AddPeer(publicAddress, port, openPort string) {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", publicAddress, port, openPort[1:]), nil)
+func AddPeer(address, port, openPort string) {
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
 	HandleErr(err)
-	initPeer(conn, publicAddress, port)
+	initPeer(conn, address, port)
 }
 
 // ==========peer
@@ -95,7 +89,6 @@ func initPeer(conn *websocket.Conn, address, port string) *Peer {
 		Conn:    conn,
 		Inbox:   make(chan []byte),
 	}
-	fmt.Println(p.Address)
 	go p.readListener()
 	go p.writeListener()
 	Peers.v[key] = p
@@ -138,11 +131,18 @@ func (p *Peer) readListener() {
 			break
 		}
 		fmt.Println("msg : ", string(m))
-		peerList := []Peer{}
-		json.Unmarshal(m, &peerList)
-		for _, v := range peerList {
-			peerPort := fmt.Sprintf(":%s", v.Port)
-			AddPeer(payload.Address, payload.Port, peerPort)
+		mparts := strings.Split(string(m), ":")
+		if mparts[0] == "file_ready" {
+			fmt.Printf("mparts[1]: ")
+			fmt.Println(mparts[1])
+			receiveFile(p, mparts[1])
+		} else {
+			peerList := []Peer{}
+			json.Unmarshal(m, &peerList)
+			for _, v := range peerList {
+				peerPort := fmt.Sprintf(":%s", v.Port)
+				AddPeer(payload.Address, payload.Port, peerPort)
+			}
 		}
 	}
 }
@@ -180,14 +180,15 @@ func peersAPI(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RestStart(aPort int, publicAddress string) {
+func RestStart(aPort int) {
 	port = fmt.Sprintf(":%d", aPort)
 	router := mux.NewRouter()
 	router.Use(jsonContentTypeMiddleware, loggerMiddleware)
 	router.HandleFunc("/ws", Upgrade).Methods("GET")
 	router.HandleFunc("/peers", peersAPI).Methods("GET", "POST")
-	fmt.Printf("Listening on http://%s%s\n", publicAddress, port)
-	log.Fatal(http.ListenAndServe(publicAddress+port, router))
+	router.HandleFunc("/dbsync", dbsyncAPI).Methods("GET", "POST")
+	fmt.Printf("Listening on http://localhost%s\n", port)
+	log.Fatal(http.ListenAndServe(port, router))
 }
 
 // == cli
