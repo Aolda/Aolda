@@ -5,9 +5,8 @@
 - [X] 1:1 ws network
 - [X] 1:1 msg read / write
 - [X] 1:n multinode p2p network
-- [ ] 1:1 db synchronization
+- [X] 1:1 db synchronization
 - [ ] 1:n db synchronization
-- [ ] 1:n msg read / write
 - [ ] Kademlia implement
 - [ ] k8s operation
 
@@ -30,6 +29,25 @@ req.body
 해당 node로 연결 요청
 - call AddPeer()
 
+### [POST] {host}/dbsync
+
+req.body
+```
+{
+    "Address": "localhost",
+    "Port": "3000",
+    "Type" : "0",
+    "FileName":"add.js,div.js"
+}
+```
+
+- Type이 0이면 원하는 파일을 전송
+
+- Type이 1이면 모든 파일을 전송(예정)
+
+
+
+
 ### [GET] {host}/peers
 
 res.body
@@ -43,6 +61,10 @@ res.body
 
 host node와 연결된 nodes 확인
 - call AllPeers()
+
+### [GET] {host}/dbsync
+- src에 있는 모든 파일 리스트를 return
+
 
 ## function description
 

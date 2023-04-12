@@ -56,7 +56,7 @@ func sendFile(p *Peer, filename string) {
 	HandleErr(err)
 	defer file.Close()
 
-	readyMsg := "file_ready" + ":" + "." + filename
+	readyMsg := "file_ready" + ":" + filename
 	err = p.Conn.WriteMessage(websocket.TextMessage, []byte(readyMsg))
 	HandleErr(err)
 
