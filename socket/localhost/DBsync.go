@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -28,28 +29,25 @@ func findPeerByAddressAndPort(address, port string) (*Peer, error) {
 	return nil, errors.New("peer not found")
 }
 
-func dbsync(address, filename, port string, Type int) {
-	switch Type {
-	case 0: // 원하는 파일 전송
-		fileparts := strings.Split(filename, ",")
-		for i := range fileparts {
-			fileparts[i] = strings.TrimSpace(fileparts[i])
-			peer, err := findPeerByAddressAndPort(address, port)
-			if err != nil {
-				HandleErr(err)
-			}
-			fmt.Printf("fileparts: ")
-			fmt.Println(fileparts[i])
-			sendFile(peer, fileparts[i])
-		}
-		fmt.Println(fileparts)
-	case 1: // 전부 다 전송
+func dbsync(address, filename, port string) {
 
+	// 원하는 파일 전송
+	fileparts := strings.Split(filename, ",")
+	for i := range fileparts {
+		fileparts[i] = strings.TrimSpace(fileparts[i])
+		peer, err := findPeerByAddressAndPort(address, port)
+		if err != nil {
+			HandleErr(err)
+		}
+		fmt.Printf("fileparts: ")
+		fmt.Println(fileparts[i])
+		sendFile(peer, fileparts[i])
 	}
+	fmt.Println(fileparts)
 }
 
 func sendFile(p *Peer, filename string) {
-	// 파일을 읽기용으로 연 파일 객체를 반환합니다.
+	// 파일을 읽기용으로 연 파일 객체를 반환
 	path := "../node/src/" // main.go 파일 기준 경로
 	filepath := path + filename
 	file, err := os.Open(filepath)
@@ -60,7 +58,7 @@ func sendFile(p *Peer, filename string) {
 	err = p.Conn.WriteMessage(websocket.TextMessage, []byte(readyMsg))
 	HandleErr(err)
 
-	// 파일 내용을 WebSocket 연결을 통해 보냅니다.
+	// 파일 내용을 WebSocket 연결을 통해 보냄
 	buffer := make([]byte, 1024)
 	for {
 		bytesRead, err := file.Read(buffer)
@@ -83,11 +81,11 @@ func sendFile(p *Peer, filename string) {
 }
 
 func receiveFile(p *Peer, filename string) {
-	// 파일을 받아서 저장할 경로와 파일 이름을 결정합니다.
+	// 파일을 받아서 저장할 경로와 파일 이름을 결정
 	path := "../node/src/"
 	filepath := path + filename
 
-	// 파일을 열고 쓰기용으로 연 파일 객체를 반환합니다.
+	// 파일을 열고 쓰기용으로 연 파일 객체를 반환
 	file, err := os.Create(filepath)
 	HandleErr(err)
 	defer file.Close()
@@ -113,16 +111,43 @@ func receiveFile(p *Peer, filename string) {
 	fmt.Println("File", filename, "received and saved to", filepath)
 }
 
+func readSrcAndSendList(rw http.ResponseWriter) {
+	files, err := ioutil.ReadDir("../node/src")
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var fileInfos []map[string]interface{}
+	for _, f := range files {
+		fileInfo := make(map[string]interface{})
+		fileInfo["name"] = f.Name()
+		fileInfo["size"] = f.Size()
+		fileInfo["modified"] = f.ModTime().String()
+		fileInfos = append(fileInfos, fileInfo)
+	}
+
+	fileInfoJson, err := json.Marshal(fileInfos)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// JSON 형식의 파일 리스트를 반환합니다.
+	rw.Header().Set("Content-Type", "application/json")
+	rw.Write(fileInfoJson)
+}
+
 func dbsyncAPI(rw http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "POST": // DB에서 원하는 파일을 전송, 만약 all 값이 1이면 전부 다 전송
+	case "POST": // DB에서 원하는 파일을 전송
 		json.NewDecoder(r.Body).Decode(&dbpayload)
-		fmt.Println("dbpayload: ")
-		fmt.Println(dbpayload.Address, dbpayload.FileName, dbpayload.Port, dbpayload.Type)
-		dbsync(dbpayload.Address, dbpayload.FileName, dbpayload.Port, dbpayload.Type)
+		dbsync(dbpayload.Address, dbpayload.FileName, dbpayload.Port)
 		rw.WriteHeader(http.StatusOK)
 
-	case "GET": // DB list 전송
-
+	case "GET": // src 파일 list 전송
+		readSrcAndSendList(rw)
+	default:
+		http.Error(rw, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
