@@ -5,10 +5,10 @@
 - [X] 1:1 ws network
 - [X] 1:1 msg read / write
 - [X] 1:n multinode p2p network
-- [ ] 1:1 db synchronization
-- [ ] 1:n db synchronization
-- [ ] 1:n msg read / write
-- [ ] Kademlia implement
+- [X] 1:1 db synchronization
+- [ ] Public IP base connection
+- [ ] DHT(Kademlia base)
+- [ ] Distributed DB(Swarm base)
 - [ ] k8s operation
 
 ## usage
@@ -30,6 +30,21 @@ req.body
 해당 node로 연결 요청
 - call AddPeer()
 
+### [POST] {host}/dbsync
+
+req.body
+```
+{
+    "Address": "localhost",
+    "Port": "3000"
+    "FileName":"add.js,div.js"
+}
+```
+
+- 원하는 파일을 전송
+- 만약 똑같은 이름의 파일이 있다면 덮어쓰기
+
+
 ### [GET] {host}/peers
 
 res.body
@@ -43,6 +58,44 @@ res.body
 
 host node와 연결된 nodes 확인
 - call AllPeers()
+
+### [GET] {host}/dbsync
+```
+[
+    {
+        "modified": "2023-04-13 15:50:45.811246588 +0900 KST",
+        "name": "add.js",
+        "size": 101
+    },
+    {
+        "modified": "2023-04-13 15:50:45.811620125 +0900 KST",
+        "name": "div.js",
+        "size": 100
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871255162 +0900 KST",
+        "name": "math.js",
+        "size": 421
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871394655 +0900 KST",
+        "name": "mod.js",
+        "size": 100
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871517316 +0900 KST",
+        "name": "mul.js",
+        "size": 100
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871648601 +0900 KST",
+        "name": "sub.js",
+        "size": 101
+    }
+]
+```
+- src에 있는 모든 파일 리스트를 return
+
 
 ## function description
 
