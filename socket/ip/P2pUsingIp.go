@@ -2,11 +2,11 @@ package ip
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -199,13 +199,43 @@ func usage() {
 }
 
 func CliStart() {
-	if len(os.Args) == 1 {
-		usage()
+	// if len(os.Args) == 1 {
+	// 	usage()
+	// }
+
+	// ip := GetPrivateIp()
+	// port := flag.Int("port", 4000, "Set port of the server")
+	// flag.Parse()
+
+	// //ip, port, err := GetPublicIPAndPort()
+	// fmt.Printf("ip is %x\n", ip)
+	// // if err != nil {
+	// // 	fmt.Println("GetPublicIPAndPort ERROR")
+	// // 	os.Exit(0)
+	// // }
+
+	// RestStart(port, ip)
+
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: go run . <local-ip-address> <port>")
+		return
 	}
 
 	ip := GetPrivateIp()
-	port := flag.Int("port", 4000, "Set port of the server")
-	flag.Parse()
+	port = os.Args[2]
+	portInt, err := strconv.Atoi(port) // port를 정수로 변환
+	if err != nil {
+		fmt.Println("Invalid port number")
+		return
+	}
+	startNode(ip, portInt)
 
-	RestStart(*port, ip)
+	// 이 부분을 추가합니다.
+	aPort, err := strconv.Atoi(port)
+	if err != nil {
+		fmt.Println("Invalid port number. Please provide a valid integer for the port number.")
+		return
+	}
+	RestStart(aPort, ip)
+
 }

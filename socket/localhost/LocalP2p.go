@@ -2,7 +2,6 @@ package localhost
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -200,12 +199,20 @@ func usage() {
 }
 
 func CliStart() {
-	if len(os.Args) == 1 {
-		usage()
+	// if len(os.Args) == 1 {
+	// 	usage()
+	// }
+
+	// port := flag.Int("port", 4000, "Set port of the server")
+	// flag.Parse()
+
+	// RestStart(*port)
+
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: go run . <local-ip-address>")
+		return
 	}
 
-	port := flag.Int("port", 4000, "Set port of the server")
-	flag.Parse()
-
-	RestStart(*port)
+	ip := os.Args[1]
+	startNode(ip)
 }

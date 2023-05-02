@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+
+	"github.com/pion/stun"
 )
 
 // == private(internal) ip
@@ -57,4 +59,36 @@ func GetPublicIp() string {
 
 	fmt.Println(ipInfo.Origin)
 	return ipInfo.Origin
+}
+
+func GetPublicIPAndPort() (string, int, error) {
+	c, err := stun.Dial("udp", "stun.l.google.com:19302")
+	if err != nil {
+		return "", 0, err
+	}
+
+	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
+
+	var ipStr string
+	var port int
+
+	err = c.Do(message, func(res stun.Event) {
+		if res.Error != nil {
+			err = res.Error
+			return
+		}
+
+		var xorAddr stun.XORMappedAddress
+		if err := xorAddr.GetFrom(res.Message); err != nil {
+			err = err
+			return
+		}
+
+		ipStr = xorAddr.IP.String()
+		port = xorAddr.Port
+	})
+
+	fmt.Println(ipStr)
+	fmt.Println(port)
+	return ipStr, port, err
 }
