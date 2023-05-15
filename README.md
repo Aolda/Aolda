@@ -1,159 +1,69 @@
 # Aolda_dev-p2p
 
+## warning
+
+```
+sudo ipfs daemon &
+```
+ipfs daemon를 백그라운드에 실행하고 main.go를 실행
+
 ## progress
 
 - [X] 1:1 ws network
 - [X] 1:1 msg read / write
 - [X] 1:n multinode p2p network
 - [X] 1:1 db synchronization
-- [ ] Public IP base connection
-- [ ] DHT(Kademlia base)
-- [ ] Distributed DB(Swarm base)
+- [X] Public IP base connection
+- [X] DHT(Kademlia base)
+- [X] Distributed DB(IPFS base)
 - [ ] k8s operation
 
 ## usage
+node/main.go 파일 실행
 
 ```
-go run . -port={portNum}
+go run main.go
 ```
 
-### [POST] {host}/peers
-
-req.body
+KDH를 통한 Peer 탐색
 ```
-{
-    "Address": "localhost",
-    "Port": "3000"
-}
+Searching for peers...
+Failed connecting to  12D3KooWDiAYcsKoznuM7Srvxiyiev4E7AJZPskREytrdxtyTVSi , error: no addresses
+Failed connecting to  12D3KooWDejdKJUyNndjhraWYjfhbGqUaezqHNruv39UYUBLVhNB , error: no addresses
+Failed connecting to  12D3KooWDnVPRzHuxfeLwC3EcY8soq4gCtYz4h3xJfHYkBLKzVWt , error: no addresses
+Failed connecting to  12D3KooWDzubhS7uBFAZrgxrqodcNiPauWD7tSmDUeHrza1WGgt7 , error: no addresses
+Failed connecting to  12D3KooWAAySgPfySCtg6YtTDqbFh4twHg23JtvbuvA353Z5DfoM , error: no addresses
+Failed connecting to  12D3
+...
+Connected to: 12D3KooWC1iTVpMFfKbdN8rkZBRCvRFT9BEn1nXPkS94jDjEDYrW
+Failed connecting to  12D3KooWDXU1jJr8jVsRMwSodEySxTAfPZhcoU29kxfJ5bdWZJFY , error: no addresses
+...
+Failed connecting to  12D3KooWSnpXUJX6wbTwp4He7SG3ZVYer1UErqUgwQ5LjjrMNqGL , error: no addresses
+Failed connecting to  12D3KooWNpFvRJYPYCYPirsaRRELNkGddWCxcB6Jv5FaQwx7gf8G , error: no addresses
+Failed connecting to  12D3KooWPBHw7LUzWiFzHqbASVrAfStrZMdAdBtxbEXMBMS8equh , error: no addresses
+Failed connecting to  12D3KooWQXUUzd4poaoButF3tRzYXwPhzXqhYZ9fHao4h3bQFvUJ , error: no addresses
+Peer discovery complete
 ```
-
-해당 node로 연결 요청
-- call AddPeer()
-
-### [POST] {host}/dbsync
-
-req.body
-```
-{
-    "Address": "localhost",
-    "Port": "3000"
-    "FileName":"add.js,div.js"
-}
-```
-
-- 원하는 파일을 전송
-- 만약 똑같은 이름의 파일이 있다면 덮어쓰기
+Connected to: 나 Peer discovery complete의 Log가 발생하면 연결이 완료된 것
 
 
-### [GET] {host}/peers
+특정 message를 보내서 행동을 할 수 있음
 
-res.body
+1. exec/[file name]/[function name]/[argv]
 ```
-[
-    "localhost:3001",
-    "localhost:3002",
-    "localhost:4000"
-]
+exec/add.js/add/1 2
 ```
+2. upload/[filename]
+```
+upload/add.js
+```
+**해당 add.js는 src에 있는 파일을 대상으로 함**
 
-host node와 연결된 nodes 확인
-- call AllPeers()
-
-### [GET] {host}/dbsync
+3. get/[hash value]/[file name]
 ```
-[
-    {
-        "modified": "2023-04-13 15:50:45.811246588 +0900 KST",
-        "name": "add.js",
-        "size": 101
-    },
-    {
-        "modified": "2023-04-13 15:50:45.811620125 +0900 KST",
-        "name": "div.js",
-        "size": 100
-    },
-    {
-        "modified": "2023-04-07 13:34:51.871255162 +0900 KST",
-        "name": "math.js",
-        "size": 421
-    },
-    {
-        "modified": "2023-04-07 13:34:51.871394655 +0900 KST",
-        "name": "mod.js",
-        "size": 100
-    },
-    {
-        "modified": "2023-04-07 13:34:51.871517316 +0900 KST",
-        "name": "mul.js",
-        "size": 100
-    },
-    {
-        "modified": "2023-04-07 13:34:51.871648601 +0900 KST",
-        "name": "sub.js",
-        "size": 101
-    }
-]
+get/Qmb4vr9WeYJZvTS9drzD4UTVjzFW2nZLEPZAhCKMkBxaz1/mul1.js
 ```
-- src에 있는 모든 파일 리스트를 return
-
-
-## function description
-
-```
-func CliStart()
-```
-- port 번호 입력
-- call RestStart()
-
-```
-func RestStart()
-```
-- set router
-- listening /peers
-- listening /ws
-
-```
-func peersAPI()
-```
-- called by /peers
-- in POST, call AddPeer()
-- in GET, call AllPeers()
-
-```
-func AddPeer()
-```
-- make websocket connection
-- call initPeer()
-
-```
-func AllPeers()
-```
-- return Peers
-
-```
-func initPeer()
-```
-- return connected Peer
-- save connected Peer in Peers
-- call readListener()
-- call writeListener()
-- call write()
-
-```
-func writeListener()
-```
-- write the message for Peers data to All nodes
-
-```
-func readListener()
-```
-- convert msg to JSON/struct Peer
-- call AddPeer() for new Peer data
-
-```
-func write()
-```
-- return Peers data to go channel(writeListener)
+**해당 hash 값은 add를 할 때, 나오는 값**
 
 
 ## commit message guidline
