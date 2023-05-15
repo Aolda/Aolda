@@ -38,6 +38,7 @@ func startNode(ip string, port int) {
 		buffer := make([]byte, bufferSize)
 		for {
 			n, addr, err := conn.ReadFromUDP(buffer)
+			fmt.Println("123")
 			if err != nil {
 				fmt.Println("Error reading from UDP:", err)
 				continue
@@ -78,7 +79,7 @@ func startNode(ip string, port int) {
 		if err != nil {
 			fmt.Println("Error broadcasting Hello message:", err)
 		}
-
+		fmt.Println("1")
 		time.Sleep(5 * time.Second)
 	}
 }

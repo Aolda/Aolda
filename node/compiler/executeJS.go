@@ -6,6 +6,9 @@ import (
 )
 
 func ExecuteJS(fileName string, funcName string, args []string) string {
+	fmt.Println(fileName)
+	fmt.Println(funcName)
+	fmt.Println(args)
 	argsForCommand := []string{"./compiler/script.js", fileName, funcName}
 	argsForCommand = append(argsForCommand, args...)
 	cmd := exec.Command("node", argsForCommand...)
