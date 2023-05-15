@@ -6,12 +6,59 @@
 - [X] 1:1 msg read / write
 - [X] 1:n multinode p2p network
 - [X] 1:1 db synchronization
-- [ ] Public IP base connection
-- [ ] DHT(Kademlia base)
-- [ ] Distributed DB(Swarm base)
+- [X] Public IP base connection
+- [X] DHT(Kademlia base)
+- [X] Distributed DB(IPFS base)
 - [ ] k8s operation
 
-## usage
+## usage about pubsub
+node/main.go 파일 실행
+
+```
+go run main.go
+```
+
+KDH를 통한 Peer 탐색
+```
+Searching for peers...
+Failed connecting to  12D3KooWDiAYcsKoznuM7Srvxiyiev4E7AJZPskREytrdxtyTVSi , error: no addresses
+Failed connecting to  12D3KooWDejdKJUyNndjhraWYjfhbGqUaezqHNruv39UYUBLVhNB , error: no addresses
+Failed connecting to  12D3KooWDnVPRzHuxfeLwC3EcY8soq4gCtYz4h3xJfHYkBLKzVWt , error: no addresses
+Failed connecting to  12D3KooWDzubhS7uBFAZrgxrqodcNiPauWD7tSmDUeHrza1WGgt7 , error: no addresses
+Failed connecting to  12D3KooWAAySgPfySCtg6YtTDqbFh4twHg23JtvbuvA353Z5DfoM , error: no addresses
+Failed connecting to  12D3
+...
+Connected to: 12D3KooWC1iTVpMFfKbdN8rkZBRCvRFT9BEn1nXPkS94jDjEDYrW
+Failed connecting to  12D3KooWDXU1jJr8jVsRMwSodEySxTAfPZhcoU29kxfJ5bdWZJFY , error: no addresses
+...
+Failed connecting to  12D3KooWSnpXUJX6wbTwp4He7SG3ZVYer1UErqUgwQ5LjjrMNqGL , error: no addresses
+Failed connecting to  12D3KooWNpFvRJYPYCYPirsaRRELNkGddWCxcB6Jv5FaQwx7gf8G , error: no addresses
+Failed connecting to  12D3KooWPBHw7LUzWiFzHqbASVrAfStrZMdAdBtxbEXMBMS8equh , error: no addresses
+Failed connecting to  12D3KooWQXUUzd4poaoButF3tRzYXwPhzXqhYZ9fHao4h3bQFvUJ , error: no addresses
+Peer discovery complete
+```
+Connected to: 나 Peer discovery complete의 Log가 발생하면 연결이 완료된 것
+
+
+특정 message를 보내서 행동을 할 수 있음
+
+1. exec/[file name]/[function name]/[argv]
+```
+exec/add.js/add/1 2
+```
+2. upload/[filename]
+```
+upload/add.js
+```
+**해당 add.js는 src에 있는 파일을 대상으로 함**
+
+3. get/[hash value]/[file name]
+```
+get/Qmb4vr9WeYJZvTS9drzD4UTVjzFW2nZLEPZAhCKMkBxaz1/mul1.js
+```
+**해당 hash 값은 add를 할 때, 나오는 값**
+
+## usage about TCP socket
 
 ```
 go run . -port={portNum}
