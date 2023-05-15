@@ -1,5 +1,4 @@
 import { ethers } from "hardhat";
-import { AoldaClient } from '../contracts/AoldaClient';
 
 async function main() {
   const AoldaClient = await ethers.getContractFactory("AoldaClient");
