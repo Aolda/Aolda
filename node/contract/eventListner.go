@@ -13,7 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	"aolda_node/blockchain"
 	compiler "aolda_node/compiler"
+	"aolda_node/p2p"
+	"aolda_node/utils"
 )
 
 /*
@@ -121,8 +124,19 @@ func ListenEvent() {
 				args = append(args, arg)
 			}
 			fmt.Println("Execute start")
+			evmCallTx,err := blockchain.MakeEvmCallTx(fileName,functionName,args)
+			utils.HandleErr(err)
+			// fmt.Print(*evmCallTx)
+			p2p.NotifyNewTx(evmCallTx)
+
 			res := compiler.ExecuteJS(fileName, functionName, args)
-			SetValue(functionName, args, res)
+
+			confirmTx,err := blockchain.MakeCofirmTx(fileName,functionName,res,args)
+			utils.HandleErr(err)
+			// fmt.Print(*confirmTx)
+			p2p.NotifyNewTx(confirmTx)
+			// SetValue는 합의 후에
+			// SetValue(functionName, args, res)
 		}
 	}
 }

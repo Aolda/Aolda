@@ -21,38 +21,41 @@ type Message struct {
 	Payload string
 }
 
-func pub(eventName string, payload interface{}) {
-	// m := Message{
-	// 	EventName:    eventName,
-	// 	Payload: utils.ToJSON(payload),
-	// }
+func Pub(eventName string, payload interface{}) {
+	m := Message{
+		EventName:    eventName,
+		Payload: utils.ToJSON(payload),
+	}
+	message := utils.ToJSON(m)
+	fmt.Print(message)
+	// message를 퍼블리쉬하면됨
 	// // pub(m)
 }
 
-func sendNewestBlock() {
+func SendNewestBlock() {
 	b, err := blockchain.FindBlock(blockchain.Blockchain().NewestHash)
 	utils.HandleErr(err)
-	pub(SEND_NEWEST_BLOCK, b)
+	Pub(SEND_NEWEST_BLOCK, b)
 }
 
-func requestAllBlocks() {
-	pub(REQUEST_ALL_BLOCK, nil)
+func RequestAllBlocks() {
+	Pub(REQUEST_ALL_BLOCK, nil)
 }
 
-func sendAllBlocks() {
-	pub(SEND_ALL_BLOCK, blockchain.Blocks(blockchain.Blockchain()))
+func SendAllBlocks() {
+	Pub(SEND_ALL_BLOCK, blockchain.Blocks(blockchain.Blockchain()))
 }
 
-func notifyNewBlock(b *blockchain.Block) {
-	pub(MAKE_NEW_BLOCK, b)
+func NotifyNewBlock(b *blockchain.Block) {
+	Pub(MAKE_NEW_BLOCK, b)
 }
 
-func notifyNewTx(tx *blockchain.Transaction) {
-	pub(MAKE_NEW_TX, tx)
+func NotifyNewTx(tx *blockchain.Transaction) {
+	Pub(MAKE_NEW_TX, tx)
 }
 
-func notifyNewPeer(address string) {
-	pub(MAKE_NEW_PEER, address)
+func NotifyNewPeer(address string) {
+	Pub(MAKE_NEW_PEER, address)
 }
 
 func handleMsg(m *Message) {
@@ -63,13 +66,13 @@ func handleMsg(m *Message) {
 		b, err := blockchain.FindBlock(blockchain.Blockchain().NewestHash)
 		utils.HandleErr(err)
 		if payload.Header.BlockNumber >= b.Header.BlockNumber {
-			requestAllBlocks()
+			RequestAllBlocks()
 		} else {
-			sendNewestBlock()
+			SendNewestBlock()
 		}
 	case REQUEST_ALL_BLOCK:
 		fmt.Printf("wants all the blocks.\n")
-		sendAllBlocks()
+		SendAllBlocks()
 	case SEND_ALL_BLOCK:
 		// fmt.Printf("Received all the blocks from\n"ey)
 		var payload []*blockchain.Block

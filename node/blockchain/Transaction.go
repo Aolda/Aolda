@@ -5,12 +5,20 @@ import (
 	"aolda_node/wallet"
 	"errors"
 	"sync"
+	"time"
 )
 
 const (
 	minerReward int = 50
 )
 
+const (
+	FILE_MAKE = 0 + iota
+	EVM_CALL
+	API_CALL
+	CONFIRM_VALUE
+	COINBASE
+)
 /**
 트랜잭션
 */
@@ -63,25 +71,55 @@ func Mempool() *mempool {
 	return m
 }
 
+
+/**
+ EVM에서 Call했을 때 발생하는 Transaction 만들기
+*/
+func MakeEvmCallTx(fileHash, functionName string, args []string) (*Transaction, error) {
+	return makeTx(EVM_CALL, fileHash,functionName,"",args)
+}
+
+/**
+ API로 노드 직접 Call했을 때 발생하는 Transaction 만들기
+*/
+func MakeAPICallTx(fileHash, functionName string, args []string) (*Transaction, error) {
+	return makeTx(API_CALL, fileHash,functionName,"",args)
+}
+
+/**
+ add.js 등 file 추가했을 때 생성되는 Transaction 만들기
+*/
+func MakeFileTx(fileHash string) (*Transaction, error) {
+	return makeTx(FILE_MAKE, fileHash,"","",nil)
+}
+
+/**
+ 값 확정하는 Transaction 만들기
+*/
+func MakeCofirmTx(fileHash, functionName, result string, args []string) (*Transaction, error) {
+	return makeTx(CONFIRM_VALUE, fileHash, functionName, result, args)
+}
+
 /**
  Transaction 만들기
 */
-func makeTx() (*Transaction, error) {
+func makeTx(_type int, fileHash, functionName, result string, args []string) (*Transaction, error) {
+	txBody := TransactionBody{
+		FileHash :fileHash,
+		FunctionName: functionName,
+		Arguments: args,
+		Result:result,
+	}
+
 	txHeader := TransactionHeader{
-		Type:4,
+		Type:_type,
 		Hash:"",
 		BlockNumber:0,
 		TransactionIndex:0,
 		From:wallet.GetPublicKey(),
 		Nonce:0,
 		Signature: wallet.Signature{},
-		TimeStampe :0,
-	}
-	txBody := TransactionBody{
-		FileHash :"",
-		FunctionName: "",
-		Arguments: nil,
-		Result:"",
+		TimeStampe : int(time.Now().Unix()),
 	}
 
 	tx := &Transaction{
@@ -95,7 +133,7 @@ func makeTx() (*Transaction, error) {
  Transaction 서명
 */
 func confirmTx(tx *Transaction) (*Transaction, error) {
-	tx.getId()
+	tx.getHash()
 	tx.sign()
 	valid := validate(tx)
 	if !valid {
@@ -130,14 +168,14 @@ func (m *mempool) TxToConfirm() []*Transaction {
 */
 func makeCoinbaseTx() *Transaction {
 	txHeader := TransactionHeader{
-		Type:4,
+		Type:COINBASE,
 		Hash:"",
 		BlockNumber:0,
 		TransactionIndex:0,
 		From:wallet.GetPublicKey(),
 		Nonce:0,
 		Signature: wallet.Signature{},
-		TimeStampe :0,
+		TimeStampe : int(time.Now().Unix()),
 	}
 	txBody := TransactionBody{
 		FileHash :"",
@@ -150,11 +188,11 @@ func makeCoinbaseTx() *Transaction {
 		Header: txHeader,
 		Body: txBody,
 	}
-	tx.getId()
+	tx.getHash()
 	return &tx
 }
 
-func (t *Transaction) getId() {
+func (t *Transaction) getHash() {
 	t.Header.Hash = utils.Hash(t)
 }
 
@@ -170,4 +208,8 @@ func (m *mempool) AddPeerTx(tx *Transaction) {
 
 	m.Txs[tx.Header.Hash] = tx
 
+}
+
+func (m *mempool) AddTx(tx *Transaction) {
+	m.Txs[tx.Header.Hash] = tx
 }

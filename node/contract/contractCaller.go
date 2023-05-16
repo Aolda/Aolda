@@ -25,7 +25,7 @@ var c contract
 var once sync.Once
 
 func (co *contract) makeContract(_nodeURL, _privateKey, _contractAddress string) {
-	fmt.Println("contractCaller: MakeContract")
+	// fmt.Println("contractCaller: MakeContract")
 	client, err := ethclient.Dial(_nodeURL)
 	if err != nil {
 		fmt.Println("Error Fucntion: makeContract _nodeURL error: ")
@@ -106,20 +106,19 @@ func SetValue(functionName string, arguments []string, result string) {
 	config := LoadENV()
 	c = *Contract(config.BLOCKCHAIN_URL, config.PRIVATE_KEY, config.CONTRACT_ADDRESS)
 
-	temp := "a"
-	nf := "aa"
-	var a []string
-	a = append(a, "a")
-	signature, _ := c.instance.MakeSignature(nil, temp, nf, a)
-	fmt.Print("here!")
-	fmt.Print(signature)
-	// signature, err := c.setValue(functionName, arguments, result)
-	// fmt.Println("signature: ")
-	// fmt.Println(signature)
-	// if err != nil {
-	// 	fmt.Println("Error Function: SetValue - Signature Problem ")
-	// 	log.Fatal(err)
-	// }
+	// temp := "a"
+	// nf := "aa"
+	// var a []string
+	// a = append(a, "a")
+	// signature, _ := c.instance.MakeSignature(nil, temp, nf, a)
+	// fmt.Print("here!")
+	// fmt.Print(signature)
+	_, err := c.setValue(functionName, arguments, result)
+	fmt.Printf("res: %s",result)
 
+	if err != nil {
+		fmt.Println("Error Function: SetValue - Signature Problem ")
+		log.Fatal(err)
+	}
 	// fmt.Println(signature) // tx sent: 0x8d490e535678e9a24360e955d75b27ad307bdfb97a1dca51d0f3035dcee3e870
 }

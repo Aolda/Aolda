@@ -3,7 +3,6 @@ package wallet
 import (
 	"aolda_node/utils"
 	"crypto/ecdsa"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -57,7 +56,7 @@ func GetPublicKey() string {
 	privateKey, err := crypto.HexToECDSA(privateKeyString)
 	utils.HandleErr(err)
 
-	fmt.Println(" Key:", privateKey)
+	// fmt.Println(" Key:", privateKey)
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
