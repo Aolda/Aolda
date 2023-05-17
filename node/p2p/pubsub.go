@@ -121,6 +121,7 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 		if errJ != nil {
 			log.Fatal(err)
 		}
+
 		switch m.EventName {
 		case SEND_NEWEST_BLOCK:
 			//가장 최신의 block에 대해서 보내기
@@ -136,7 +137,13 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 			mempool := blockchain.Mempool()
 			mempool.Clear()
 		case MAKE_NEW_TX:
-			// mempool로 직행? pub해서 받은거니깐 다른 node에서 만든걸텐데?
+			var transaction Transaction
+			errT := json.Unmarshal([]byte(m.Payload), &transaction)
+			if errT != nil {
+				log.Fatal(errT)
+			}
+			AddTx(transaction)
+			// mempool로 직행, 이건 EVM에서 올라와서 pub하는거니깐
 		case MAKE_NEW_PEER:
 			//peer랑 연결하는 로직
 		}

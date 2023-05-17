@@ -71,6 +71,15 @@ func Mempool() *mempool {
 	return m
 }
 
+/**
+ 밈풀 초기화
+*/
+func (mp *mempool) Clear() {
+	mp.m.Lock()
+	defer mp.m.Unlock()
+
+	mp.Txs = make(map[string]*Transaction)
+}
 
 /**
  EVM에서 Call했을 때 발생하는 Transaction 만들기
