@@ -6,7 +6,7 @@ contract AoldaClient {
   mapping(bytes32 => string) private result;
 
   function callAolda(string memory fileHash, string memory funtionName, string[] memory arguments) public {
-    emit CallAolda(fileHash,funtionName, arguments);
+    emit CallAolda(fileHash, funtionName, arguments);
   }
 
   function setValue(bytes32 signature ,string memory value) public{

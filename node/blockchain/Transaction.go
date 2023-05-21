@@ -62,6 +62,7 @@ var memOnce sync.Once
 /**
  밈풀 가져오기 (singleton pattern)
 */
+
 func Mempool() *mempool {
 	memOnce.Do(func() {
 		m = &mempool{

@@ -23,6 +23,7 @@ var (
 	topicNameFlag = flag.String("topicName", "applesauce", "name of topic to join")
 )
 
+
 func PubsubPeers(receivedJsonData string) {
 
 	flag.Parse()

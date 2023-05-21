@@ -20,12 +20,12 @@ const (
 )
 
 type Message struct {
-	EventName string
-	Payload   string
+	EventName string `json:"eventName"`
+	Payload   interface{} `json:"payload"`
 }
 
-func UnmarshalMessagePayload(message Message) (*Transaction, error) {
-	var transaction Transaction
+func UnmarshalMessagePayload(message Message) (*blockchain.Transaction, error) {
+	var transaction blockchain.Transaction
 	err := json.Unmarshal([]byte(message.Payload), &transaction)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func UnmarshalMessagePayload(message Message) (*Transaction, error) {
 func Pub(eventName string, payload interface{}, ctx context.Context, topic *pubsub.Topic) {
 	m := Message{
 		EventName: eventName,
-		Payload:   utils.ToJSON(payload),
+		Payload:   payload, 
 	}
 	//ctx가 고루틴한테 여러가지 정보를 전달하는 주체라고 보면 됨
 	//publish내에 자체적으로 고루틴이 돌아가는 구조라 거기로 메시지 전달하면 pub됨
