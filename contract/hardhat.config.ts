@@ -25,14 +25,6 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat:{},
-    hardhats:{
-      url: HARDHAT_URL,
-      accounts: [HARDHAT_PRIVATE_KEY,],
-    },
-    goerli:{
-      url: GOERLI_ALCHEMY_URL,
-      accounts: [GORLI_PRIVATE_KEY,],
-    },
     ganache:{
       url: GANACHE_URL,
       accounts: [GANACHE_PRIVATE_KEY,],

@@ -4,10 +4,7 @@ import (
 	"aolda_node/blockchain"
 	"aolda_node/utils"
 	"context"
-	"encoding/json"
 	"fmt"
-
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 const (
@@ -19,24 +16,74 @@ const (
 	MAKE_NEW_PEER     = "MAKE_NEW_PEER"
 )
 
-type Message struct {
-	EventName string `json:"eventName"`
-	Payload   interface{} `json:"payload"`
+type MessageForTx struct {
+	EventName string                  `json:"eventName"`
+	Payload   *blockchain.Transaction `json:"payload"`
 }
 
-func UnmarshalMessagePayload(message Message) (*blockchain.Transaction, error) {
-	var transaction blockchain.Transaction
-	err := json.Unmarshal([]byte(message.Payload), &transaction)
-	if err != nil {
-		return nil, err
-	}
-	return &transaction, nil
+type MessageForBlock struct {
+	EventName string            `json:"eventName"`
+	Payload   *blockchain.Block `json:"payload"`
 }
 
-func Pub(eventName string, payload interface{}, ctx context.Context, topic *pubsub.Topic) {
-	m := Message{
+type MessageForBlocks struct {
+	EventName string              `json:"eventName"`
+	Payload   []*blockchain.Block `json:"payload"`
+}
+
+// func (m *mempool) AddTx(tx *Transaction) {
+// 	m.Txs[tx.Header.Hash] = tx
+// 	fmt.Println(m.Txs[tx.Header.Hash])
+// }
+
+// type MessageForTx struct {
+// 	EventName string                  `json:"eventName"`
+// 	Payload   *blockchain.Transaction `json:"payload"`
+// }
+
+// /*
+// *
+// 트랜잭션
+// */
+// type Transaction struct {
+// 	Header TransactionHeader `json:"header"`
+// 	Body   TransactionBody   `json:"body"`
+// }
+
+// /*
+// *
+// 트랜잭션 바디
+// */
+// type TransactionBody struct {
+// 	FileHash     string   `json:"fileHash"`
+// 	FunctionName string   `json:"functionName"`
+// 	Arguments    []string `json:"arguments"`
+// 	Result       string   `json:"result"` // type이 4면 채굴량을 hex값으로 기록하자
+// }
+
+// /*
+// *
+// 트랜잭션 헤더
+// */
+// type TransactionHeader struct {
+// 	Type             int              `json:"type"` // 0 = contract 생성, 1 = 컨, 4= coinbase
+// 	Hash             string           `json:"hash"`
+// 	BlockNumber      int              `json:"blockNumber"`
+// 	TransactionIndex int              `json:"transactionIndex"`
+// 	From             string           `json:"from"`
+// 	Nonce            int              `json:"nonce"`
+// 	Signature        wallet.Signature `json:"signature"`
+// 	TimeStampe       int              `json:"timeStampe"`
+// }
+
+func PubForTx(eventName string, payload *blockchain.Transaction, ctx context.Context) {
+	fmt.Println("-------------------------------")
+	fmt.Println("pub the Tx")
+	fmt.Println("-------------------------------")
+
+	m := MessageForTx{
 		EventName: eventName,
-		Payload:   payload, 
+		Payload:   payload,
 	}
 	//ctx가 고루틴한테 여러가지 정보를 전달하는 주체라고 보면 됨
 	//publish내에 자체적으로 고루틴이 돌아가는 구조라 거기로 메시지 전달하면 pub됨
@@ -49,40 +96,85 @@ func Pub(eventName string, payload interface{}, ctx context.Context, topic *pubs
 	// // pub(m)
 }
 
-func SendNewestBlock(ctx context.Context, topic *pubsub.Topic) {
+func PubForBlock(eventName string, payload *blockchain.Block, ctx context.Context) {
+
+	m := MessageForBlock{
+		EventName: eventName,
+		Payload:   payload,
+	}
+	//ctx가 고루틴한테 여러가지 정보를 전달하는 주체라고 보면 됨
+	//publish내에 자체적으로 고루틴이 돌아가는 구조라 거기로 메시지 전달하면 pub됨
+	message := utils.ToJSON(m)
+	fmt.Print(message)
+	// message를 퍼블리쉬하면됨
+	if err := topic.Publish(ctx, []byte(message)); err != nil {
+		fmt.Println("### Publish error:", err)
+	}
+	// // pub(m)
+}
+
+func PubForBlocks(eventName string, payload []*blockchain.Block, ctx context.Context) {
+
+	m := MessageForBlocks{
+		EventName: eventName,
+		Payload:   payload,
+	}
+	//ctx가 고루틴한테 여러가지 정보를 전달하는 주체라고 보면 됨
+	//publish내에 자체적으로 고루틴이 돌아가는 구조라 거기로 메시지 전달하면 pub됨
+	message := utils.ToJSON(m)
+	fmt.Print(message)
+	// message를 퍼블리쉬하면됨
+	if err := topic.Publish(ctx, []byte(message)); err != nil {
+		fmt.Println("### Publish error:", err)
+	}
+	// // pub(m)
+}
+func SendNewestBlock() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	b, err := blockchain.FindBlock(blockchain.Blockchain().NewestHash)
 	utils.HandleErr(err)
-	Pub(SEND_NEWEST_BLOCK, b, ctx, topic)
+	PubForBlock(SEND_NEWEST_BLOCK, b, ctx)
 }
 
-func RequestAllBlocks(ctx context.Context, topic *pubsub.Topic) {
-	Pub(REQUEST_ALL_BLOCK, nil, ctx, topic)
+func RequestAllBlocks() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	PubForBlock(REQUEST_ALL_BLOCK, nil, ctx)
 }
 
-func SendAllBlocks(ctx context.Context, topic *pubsub.Topic) {
-	Pub(SEND_ALL_BLOCK, blockchain.Blocks(blockchain.Blockchain()), ctx, topic)
+func SendAllBlocks() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	PubForBlocks(SEND_ALL_BLOCK, blockchain.Blocks(blockchain.Blockchain()), ctx)
 }
 
-func NotifyNewBlock(b *blockchain.Block, ctx context.Context, topic *pubsub.Topic) {
-	Pub(MAKE_NEW_BLOCK, b, ctx, topic)
+func NotifyNewBlock(b *blockchain.Block) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	PubForBlock(MAKE_NEW_BLOCK, b, ctx)
 }
 
-func NotifyNewTx(tx *blockchain.Transaction, ctx context.Context, topic *pubsub.Topic) {
-	Pub(MAKE_NEW_TX, tx, ctx, topic)
+func NotifyNewTx(tx *blockchain.Transaction) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	PubForTx(MAKE_NEW_TX, tx, ctx)
 }
 
-func NotifyNewPeer(address string, ctx context.Context, topic *pubsub.Topic) {
-	Pub(MAKE_NEW_PEER, address, ctx, topic)
-}
+// func NotifyNewPeer(address string) {
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	defer cancel()
+// 	Pub(MAKE_NEW_PEER, address, ctx)
+// } 1 대 1 연결
 
-func handleMsg(m *Message) {
+func handleMsgForBlock(m *MessageForBlock) {
 	switch m.EventName {
 	case SEND_NEWEST_BLOCK:
-		var payload blockchain.Block
-		utils.HandleErr(json.Unmarshal([]byte(m.Payload), &payload))
+		//var payload *blockchain.Block
+		// utils.HandleErr(json.Unmarshal(&m.Payload, &payload))
 		b, err := blockchain.FindBlock(blockchain.Blockchain().NewestHash)
 		utils.HandleErr(err)
-		if payload.Header.BlockNumber >= b.Header.BlockNumber {
+		if m.Payload.Header.BlockNumber >= b.Header.BlockNumber {
 			RequestAllBlocks()
 		} else {
 			SendNewestBlock()
@@ -93,18 +185,23 @@ func handleMsg(m *Message) {
 	case SEND_ALL_BLOCK:
 		// fmt.Printf("Received all the blocks from\n"ey)
 		var payload []*blockchain.Block
-		utils.HandleErr(json.Unmarshal([]byte(m.Payload), &payload))
+		// utils.HandleErr(json.Unmarshal(&m.Payload, &payload))
 		blockchain.Blockchain().Replace(payload)
 	case MAKE_NEW_BLOCK:
 		var payload *blockchain.Block
-		utils.HandleErr(json.Unmarshal([]byte(m.Payload), &payload))
+		// utils.HandleErr(json.Unmarshal(&m.Payload, &payload))
 		blockchain.Blockchain().AddPeerBlock(payload)
-	case MAKE_NEW_TX:
-		var payload *blockchain.Transaction
-		utils.HandleErr(json.Unmarshal([]byte(m.Payload), &payload))
-		blockchain.Mempool().AddPeerTx(payload)
 	case MAKE_NEW_PEER:
 		// parts := strings.Split(payload, ":")
 		// peer 연결하기
+	}
+}
+
+func handleMsgForTx(m *MessageForTx) {
+	switch m.EventName {
+	case MAKE_NEW_TX:
+		var payload *blockchain.Transaction
+		// utils.HandleErr(json.Unmarshal(&m.Payload, &payload))
+		blockchain.Mempool().AddPeerTx(payload)
 	}
 }

@@ -73,6 +73,7 @@ func ListenEvent() {
 	logs := make(chan types.Log)
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
+		fmt.Println("here")
 		log.Fatal(err)
 	}
 
@@ -124,14 +125,14 @@ func ListenEvent() {
 				args = append(args, arg)
 			}
 			fmt.Println("Execute start")
-			evmCallTx,err := blockchain.MakeEvmCallTx(fileName,functionName,args)
+			evmCallTx, err := blockchain.MakeEvmCallTx(fileName, functionName, args)
 			utils.HandleErr(err)
 			// fmt.Print(*evmCallTx)
 			p2p.NotifyNewTx(evmCallTx)
 
 			res := compiler.ExecuteJS(fileName, functionName, args)
 
-			confirmTx,err := blockchain.MakeCofirmTx(fileName,functionName,res,args)
+			confirmTx, err := blockchain.MakeCofirmTx(fileName, functionName, res, args)
 			utils.HandleErr(err)
 			// fmt.Print(*confirmTx)
 			p2p.NotifyNewTx(confirmTx)

@@ -114,7 +114,7 @@ func SetValue(functionName string, arguments []string, result string) {
 	// fmt.Print("here!")
 	// fmt.Print(signature)
 	_, err := c.setValue(functionName, arguments, result)
-	fmt.Printf("res: %s",result)
+	fmt.Printf("res: %s", result)
 
 	if err != nil {
 		fmt.Println("Error Function: SetValue - Signature Problem ")
