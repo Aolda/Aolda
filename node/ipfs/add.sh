@@ -1,7 +1,7 @@
 filename=$1
 
 echo $filename
-output=$(ipfs add ./src/$filename)
+output=$(sudo ipfs add ../src/$filename)
 
 # 명령의 반환값 확인
 if [ $? -ne 0 ]; then
@@ -14,8 +14,9 @@ echo "filename: $filename"
 hash=$(echo $output | awk '{print $2}')
 
 ipfs get $hash
-mv $hash $filename
-mv $filename ./src/
+chmod 644 $hash
+sudo mv $hash $filename
+sudo mv $filename ../src/
 
 echo "Success upload the file!"
 echo "$filename is replace about $hash"

@@ -1,12 +1,13 @@
 hash=$1
-name=$2
 
 echo $hash
-echo $name
 
 ipfs get $hash
 ipfs pin add $hash
 
-mv $hash $name
-mv $name ./src/ #실행하는 주체인 node/main.go 위주로
+# 파일 이름에 이미 .js 확장자가 포함되어 있는지 확인 후 추가
+if [[ ! $hash == *".js" ]]; then
+  mv $hash $hash.js
+fi
 
+mv $name ./src/

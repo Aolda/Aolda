@@ -31,51 +31,6 @@ type MessageForBlocks struct {
 	Payload   []*blockchain.Block `json:"payload"`
 }
 
-// func (m *mempool) AddTx(tx *Transaction) {
-// 	m.Txs[tx.Header.Hash] = tx
-// 	fmt.Println(m.Txs[tx.Header.Hash])
-// }
-
-// type MessageForTx struct {
-// 	EventName string                  `json:"eventName"`
-// 	Payload   *blockchain.Transaction `json:"payload"`
-// }
-
-// /*
-// *
-// 트랜잭션
-// */
-// type Transaction struct {
-// 	Header TransactionHeader `json:"header"`
-// 	Body   TransactionBody   `json:"body"`
-// }
-
-// /*
-// *
-// 트랜잭션 바디
-// */
-// type TransactionBody struct {
-// 	FileHash     string   `json:"fileHash"`
-// 	FunctionName string   `json:"functionName"`
-// 	Arguments    []string `json:"arguments"`
-// 	Result       string   `json:"result"` // type이 4면 채굴량을 hex값으로 기록하자
-// }
-
-// /*
-// *
-// 트랜잭션 헤더
-// */
-// type TransactionHeader struct {
-// 	Type             int              `json:"type"` // 0 = contract 생성, 1 = 컨, 4= coinbase
-// 	Hash             string           `json:"hash"`
-// 	BlockNumber      int              `json:"blockNumber"`
-// 	TransactionIndex int              `json:"transactionIndex"`
-// 	From             string           `json:"from"`
-// 	Nonce            int              `json:"nonce"`
-// 	Signature        wallet.Signature `json:"signature"`
-// 	TimeStampe       int              `json:"timeStampe"`
-// }
-
 func PubForTx(eventName string, payload *blockchain.Transaction, ctx context.Context) {
 	fmt.Println("-------------------------------")
 	fmt.Println("pub the Tx")
