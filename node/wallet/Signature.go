@@ -19,10 +19,12 @@ type Signature struct {
 	V int
 }
 
-/**
- 전자 서명 후 시그니쳐 리턴
+/*
+*
+
+	전자 서명 후 시그니쳐 리턴
 */
-func Sign(message string) (Signature) {
+func Sign(message string) Signature {
 	// Load private key from .env file
 	err := godotenv.Load()
 	if err != nil {
@@ -39,7 +41,7 @@ func Sign(message string) (Signature) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	v,_ := strconv.ParseInt(signature[130:132],16,64)
+	v, _ := strconv.ParseInt(signature[130:132], 16, 64)
 	res := Signature{
 		R: signature[2:66],
 		S: signature[66:130],
@@ -48,8 +50,10 @@ func Sign(message string) (Signature) {
 	return res
 }
 
-/**
- env에 있는 PRIVATE_KEY로 부터 address를 가져옴
+/*
+*
+
+	env에 있는 PRIVATE_KEY로 부터 address를 가져옴
 */
 func GetPublicKey() string {
 	privateKeyString := os.Getenv("PRIVATE_KEY")

@@ -109,7 +109,6 @@ func getDifficulty(b *blockchain) int {
 	}
 }
 
-
 func Blockchain() *blockchain {
 	once.Do(func() {
 		b = &blockchain{
