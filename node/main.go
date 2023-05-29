@@ -3,7 +3,6 @@ package main
 import (
 	contract "aolda_node/contract"
 	database "aolda_node/database"
-
 	p2p "aolda_node/p2p"
 	"sync"
 )
@@ -11,6 +10,8 @@ import (
 func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
+	defer database.Close()
+
 	go func() {
 		defer wg.Done()
 		contract.ListenEvent()

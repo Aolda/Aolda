@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"strings"
 	"sync"
 
 	blockchain "aolda_node/blockchain"
+	database "aolda_node/database"
 
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -39,6 +41,11 @@ func PubsubPeers() {
 		panic(err)
 	}
 	go discoverPeers(ctx, h)
+	addr := fmt.Sprintf("host : %s\n",h.Addrs()[0])
+	parts := strings.Split(addr, "/")
+	port := parts[len(parts)-1]
+
+	database.InitDB(port)
 
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
@@ -161,6 +168,7 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 				// }
 				transaction := &blockchain.Transaction{
 					Header: blockchain.TransactionHeader{
+						Type:  messageForTx.Payload.Header.Type,
 						Hash:             messageForTx.Payload.Header.Hash,
 						BlockNumber:      messageForTx.Payload.Header.BlockNumber,
 						TransactionIndex: messageForTx.Payload.Header.TransactionIndex,
@@ -182,6 +190,19 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 
 				mempool.AddTx(transaction)
 				// mempool로 직행, 이건 EVM에서 올라와서 pub하는거니깐
+fmt.Println(blockchain.Blockchain())
+				// if blockchain.FindTxByBody(blockchain.Blockchain(), transaction.Body)==nil{
+				
+				// 	res := compiler.ExecuteJS(transaction.Body.FileHash, transaction.Body.FunctionName, transaction.Body.Arguments)
+
+				// 	confirmTx, err := blockchain.MakeCofirmTx(transaction.Body.FileHash, transaction.Body.FunctionName, res, transaction.Body.Arguments)
+				// 	utils.HandleErr(err)
+				// 	// fmt.Print(*confirmTx)
+				// 	NotifyNewTx(confirmTx)
+				// 	// SetValue는 합의 후에
+				// 	// SetValue(functionName, args, res)
+				// }
+
 			}
 		} else if isConvert == blockN {
 			switch messageForBlock.EventName {

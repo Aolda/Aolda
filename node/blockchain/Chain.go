@@ -4,7 +4,9 @@ import (
 	db "aolda_node/database"
 	utils "aolda_node/utils"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"reflect"
 	"sync"
 )
 
@@ -40,6 +42,8 @@ func (b *blockchain) restore(data []byte) {
 
 func (b *blockchain) AddBlock() *Block {
 	block := createBlock(b.NewestHash, b.Height+1, getDifficulty(b))
+	fmt.Println("AddBlock")
+	fmt.Println(block)
 	b.NewestHash = block.Header.BlockHash
 	b.Height = block.Header.BlockNumber
 	b.CurrentDifficulty = block.Header.Difficulty
@@ -77,8 +81,20 @@ func Txs(b *blockchain) []*Transaction {
 }
 
 func FindTx(b *blockchain, targetHash string) *Transaction {
+	if b==nil{
+		return nil
+	}
 	for _, tx := range Txs(b) {
 		if tx.Header.Hash == targetHash {
+			return tx
+		}
+	}
+	return nil
+}
+
+func FindTxByBody(b *blockchain, body TransactionBody) *Transaction {
+	for _, tx := range Txs(b) {
+		if reflect.DeepEqual(tx.Body, body)  {
 			return tx
 		}
 	}
@@ -115,7 +131,9 @@ func Blockchain() *blockchain {
 		b = &blockchain{
 			Height: 0,
 		}
+		fmt.Println("ehre")
 		checkpoint := dbStorage.LoadChain()
+		fmt.Println("here")
 		if checkpoint == nil {
 			b.AddBlock()
 		} else {
