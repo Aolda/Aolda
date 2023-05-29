@@ -71,8 +71,7 @@ func ListenEvent() {
 
 	logs := make(chan types.Log)
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
-	if err != nil {
-		fmt.Println("here")
+	if err != nil { // 문제 발생
 		log.Fatal(err)
 	}
 

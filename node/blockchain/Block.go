@@ -9,46 +9,47 @@ import (
 	"time"
 )
 
-/**
+/*
+*
 블럭 헤더
 */
 type Blockheader struct {
-	Nonce int 		`json:"nonce`
-	PreviouseHash string`json:"previouseHash"`
-	BlockHash string`json:"blockHash"`
-	Merkleroot string`json:"merkleroot"`
-	Difficulty int`json:"difficulty"`
-	Minor string`json:"minor"`
-	Size int`json:"size"`
-	BlockNumber int`json:"blockNumber"`
-	TimeStamp int`json:"timeStamp"`
-	Signature wallet.Signature `json:"signature"`
+	Nonce         int              `json:"nonce`
+	PreviouseHash string           `json:"previouseHash"`
+	BlockHash     string           `json:"blockHash"`
+	Merkleroot    string           `json:"merkleroot"`
+	Difficulty    int              `json:"difficulty"`
+	Minor         string           `json:"minor"`
+	Size          int              `json:"size"`
+	BlockNumber   int              `json:"blockNumber"`
+	TimeStamp     int              `json:"timeStamp"`
+	Signature     wallet.Signature `json:"signature"`
 }
 
-
-/**
+/*
+*
 블럭
 */
 type Block struct {
 	Header Blockheader
-	Body []*Transaction
+	Body   []*Transaction
 }
 
-
-/** 
+/*
+*
 block을 생성해줌
 */
 func createBlock(prevHash string, height int, diff int) *Block {
 	blockHeader := &Blockheader{
-		Nonce : 0,
-		PreviouseHash : prevHash,
-		BlockHash : "",
-		Merkleroot : "",
-		Difficulty : diff,
-		Minor : wallet.GetPublicKey(),
-		Size : 0,
-		BlockNumber : height,
-		TimeStamp : 0,
+		Nonce:         0,
+		PreviouseHash: prevHash,
+		BlockHash:     "",
+		Merkleroot:    "",
+		Difficulty:    diff,
+		Minor:         wallet.GetPublicKey(),
+		Size:          0,
+		BlockNumber:   height,
+		TimeStamp:     0,
 	}
 
 	block := &Block{
@@ -79,7 +80,8 @@ func FindBlock(hash string) (*Block, error) {
 	return block, nil
 }
 
-/**
+/*
+*
 블럭 채굴
 */
 func (b *Block) mine() {
