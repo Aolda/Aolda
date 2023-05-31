@@ -39,18 +39,6 @@ func IpfsGet(filehash string) error {
 	return nil
 }
 
-// func Ipfsget(filehash string) {
-// 	cmd := exec.Command("/bin/sh", "get.sh", filehash) //node/main.go를 기준으로
-// 	output, err := cmd.CombinedOutput()
-
-// 	if err != nil {
-// 		log.Fatalf("get.sh 실행 실패: %s\n", err)
-// 	}
-
-// 	log.Printf("결합된 출력:\n%s\n", string(output))
-
-// }
-
 func main() {
 	// 서브커맨드 및 파일 이름을 처리하기 위한 플래그 정의
 	addCommand := flag.NewFlagSet("add", flag.ExitOnError)
@@ -74,9 +62,13 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Printf("파일 추가: %s\n", *fileName)
-		// 여기서 특정 동작을 수행할 수 있습니다.
+		// 여기서 특정 동작을 수행
 		IpfsAdd(*fileName)
 		//해당 파일을 추가했다고 PUB 하기
+
+		//confirmTx, err := blockchain.MakeCofirmTx(transaction.Body.FileHash, transaction.Body.FunctionName, res, transaction.Body.Arguments)
+		//utils.HandleErr(err
+		// NotifyNewTx(confirmTx)
 	case "get":
 		getCommand.Parse(os.Args[2:])
 		if *fileHash == "" {

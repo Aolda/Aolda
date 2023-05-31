@@ -9,7 +9,9 @@ import (
 	"sync"
 
 	blockchain "aolda_node/blockchain"
+	"aolda_node/compiler"
 	database "aolda_node/database"
+	"aolda_node/utils"
 
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -32,7 +34,7 @@ var (
 )
 
 func PubsubPeers() {
-
+	fmt.Println(":::::  Pubsub Peers  :::::")
 	flag.Parse()
 	ctx := context.Background()
 
@@ -41,7 +43,7 @@ func PubsubPeers() {
 		panic(err)
 	}
 	go discoverPeers(ctx, h)
-	addr := fmt.Sprintf("host : %s\n",h.Addrs()[0])
+	addr := fmt.Sprintf("host : %s\n", h.Addrs()[0])
 	parts := strings.Split(addr, "/")
 	port := parts[len(parts)-1]
 
@@ -166,42 +168,51 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 				// if errtx != nil {
 				// 	log.Fatal("Fail to convert tx")
 				// }
-				transaction := &blockchain.Transaction{
-					Header: blockchain.TransactionHeader{
-						Type:  messageForTx.Payload.Header.Type,
-						Hash:             messageForTx.Payload.Header.Hash,
-						BlockNumber:      messageForTx.Payload.Header.BlockNumber,
-						TransactionIndex: messageForTx.Payload.Header.TransactionIndex,
-						From:             messageForTx.Payload.Header.From,
-						Nonce:            messageForTx.Payload.Header.Nonce,
-						Signature:        messageForTx.Payload.Header.Signature,
-						TimeStampe:       messageForTx.Payload.Header.TimeStampe,
-					},
-					Body: blockchain.TransactionBody{
-						FileHash:     messageForTx.Payload.Body.FileHash,
-						FunctionName: messageForTx.Payload.Body.FunctionName,
-						Arguments:    messageForTx.Payload.Body.Arguments,
-						Result:       messageForTx.Payload.Body.Result,
-					},
+
+				fmt.Println("-------------------------------")
+				fmt.Println("Convert message to TX")
+				fmt.Println("-------------------------------")
+
+				transaction := MessageForTxToTransaction(&messageForTx)
+
+				//type에 따라 실행 로직이 다름
+				switch transaction.Header.Type {
+				case 0: // 파일 생성 (solidity 외의 언어로 작성된 스마트 컨트랙트 생성)
+
+					// 특정 위치(./src)에 있는 fileHash(이름)를 올리고 해당 hash 값을 fileHash에 넣어주기
+					// confirm 후 해당 tx를 mempool에 넣고 tx pub
+
+				case 1: // EVM에서 AOLDA를 호출한 기록
+					mempool.AddTx(transaction)
+					// mempool로 직행, 이건 EVM에서 올라와서 pub하는거니깐
+					fmt.Print("Blockchain: ")
+					fmt.Println(blockchain.Blockchain())
+					if blockchain.FindTxByBody(blockchain.Blockchain(), transaction.Body) == nil {
+
+						res := compiler.ExecuteJS(transaction.Body.FileHash, transaction.Body.FunctionName, transaction.Body.Arguments)
+						fmt.Print("res: ")
+						fmt.Println(res)
+						transaction.Header.Type = 3 //type1에 대한 결과값이므로 맞게 type 변경
+						confirmTx, err := blockchain.MakeCofirmTx(transaction.Body.FileHash, transaction.Body.FunctionName, res, transaction.Body.Arguments)
+						utils.HandleErr(err)
+						fmt.Print("res: ")
+						fmt.Println(confirmTx)
+						// fmt.Print(*confirmTx)
+						NotifyNewTx(confirmTx)
+						// SetValue는 합의 후에
+						// SetValue(functionName, args, res)
+					}
+				case 2:
+					// USER가 API를 사용해 직접 Aolda Node를 호출한 기록
+					// 1. 호출했다는 사실에 대한 tx 2. 호출하고 계산을 마친 후 tx 둘 다 올림? 그래야할듯 ㅇㅇ
+					// 특정 dataform으로 요청이 들어옴
+					// res := compiler.ExecuteJS(transaction.Body.FileHash, transaction.Body.FunctionName, transaction.Body.Arguments)
+					// 위와 비슷하게 실행
+				case 3: // type1과 type2에 대한 결과값
+					// peer 입장에서는 실행 결과이므로, 걍 mempool에 저장
+					mempool.AddTx(transaction)
+				case 4: // 블록 채굴에 대한 트랜잭션
 				}
-				fmt.Println("-------------------------------")
-				fmt.Println("push the TX in mempool")
-				fmt.Println("-------------------------------")
-
-				mempool.AddTx(transaction)
-				// mempool로 직행, 이건 EVM에서 올라와서 pub하는거니깐
-fmt.Println(blockchain.Blockchain())
-				// if blockchain.FindTxByBody(blockchain.Blockchain(), transaction.Body)==nil{
-				
-				// 	res := compiler.ExecuteJS(transaction.Body.FileHash, transaction.Body.FunctionName, transaction.Body.Arguments)
-
-				// 	confirmTx, err := blockchain.MakeCofirmTx(transaction.Body.FileHash, transaction.Body.FunctionName, res, transaction.Body.Arguments)
-				// 	utils.HandleErr(err)
-				// 	// fmt.Print(*confirmTx)
-				// 	NotifyNewTx(confirmTx)
-				// 	// SetValue는 합의 후에
-				// 	// SetValue(functionName, args, res)
-				// }
 
 			}
 		} else if isConvert == blockN {
