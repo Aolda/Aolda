@@ -121,6 +121,7 @@ func discoverPeers(ctx context.Context, h host.Host) {
 		}
 	}
 	fmt.Println("Peer discovery complete")
+	blockchain.Blockchain() // TODO : 블럭을 요ㅇㅏ고 해됨
 }
 
 func SubMessage(ctx context.Context, sub *pubsub.Subscription) {

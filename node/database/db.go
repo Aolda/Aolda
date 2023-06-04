@@ -22,12 +22,15 @@ type DB struct{}
 func (DB) FindBlock(hash string) []byte {
 	return findBlock(hash)
 }
+
 func (DB) LoadChain() []byte {
 	return loadChain()
 }
+
 func (DB) SaveBlock(hash string, data []byte) {
 	saveBlock(hash, data)
 }
+
 func (DB) SaveChain(data []byte) {
 	saveChain(data)
 }

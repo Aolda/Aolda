@@ -31,6 +31,7 @@ type Blockheader struct {
 블럭
 */
 type Block struct {
+	quit chan bool
 	Header Blockheader
 	Body   []*Transaction
 }
@@ -84,17 +85,44 @@ func FindBlock(hash string) (*Block, error) {
 *
 블럭 채굴
 */
+// func (b *Block) mine() {
+// 	target := strings.Repeat("0", b.Header.Difficulty)
+// 	for {
+// 		b.Header.TimeStamp = int(time.Now().Unix())
+// 		hash := utils.Hash(b)
+// 		fmt.Printf("Target:%s\nHash:%s\nNonce:%d\n\n", target, hash, b.Header.Nonce)
+// 		if strings.HasPrefix(hash, target) {
+// 			b.Header.BlockHash = hash
+// 			break
+// 		} else {
+// 			b.Header.Nonce++
+// 		}
+// 	}
+// }
 func (b *Block) mine() {
 	target := strings.Repeat("0", b.Header.Difficulty)
+	b.quit = make(chan bool)
 	for {
-		b.Header.TimeStamp = int(time.Now().Unix())
-		hash := utils.Hash(b)
-		fmt.Printf("Target:%s\nHash:%s\nNonce:%d\n\n", target, hash, b.Header.Nonce)
-		if strings.HasPrefix(hash, target) {
-			b.Header.BlockHash = hash
-			break
-		} else {
-			b.Header.Nonce++
+		select {
+		case <-b.quit:
+			fmt.Println("Mining was stopped")
+			b.quit <- false
+			return
+		default:
+			b.Header.TimeStamp = int(time.Now().Unix())
+			hash := utils.Hash(b)
+			fmt.Printf("Target:%s\nHash:%s\nNonce:%d\n\n", target, hash, b.Header.Nonce)
+			if strings.HasPrefix(hash, target) {
+				b.Header.BlockHash = hash
+				return
+			} else {
+				b.Header.Nonce++
+			}
 		}
 	}
+}
+
+func (b *Block) StopMine() {
+	b.quit <- true
+	close(b.quit)
 }
