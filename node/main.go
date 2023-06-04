@@ -1,6 +1,7 @@
 package main
 
 import (
+	api "aolda_node/api"
 	contract "aolda_node/contract"
 	database "aolda_node/database"
 	p2p "aolda_node/p2p"
@@ -15,6 +16,11 @@ func main() {
 	go func() {
 		defer wg.Done()
 		contract.ListenEvent()
+	}()
+
+	go func() {
+		defer wg.Done()
+		api.Listening()
 	}()
 
 	go func() {
