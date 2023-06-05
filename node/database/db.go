@@ -43,7 +43,7 @@ func getDbName(port string) string {
 	// port := os.Args[2][6:]
 	// return fmt.Sprintf("%s_%s.db", dbName, port)
 
-	return fmt.Sprintf("%s_%s.db", dbName,port)
+	return fmt.Sprintf("%s_%s.db", dbName, port)
 }
 
 func InitDB(port string) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -31,9 +32,20 @@ type Blockheader struct {
 블럭
 */
 type Block struct {
-	quit chan bool
+	quit   chan bool
 	Header Blockheader
 	Body   []*Transaction
+}
+
+var miningBlock *Block = &Block{}
+var miningBlockOnce sync.Once
+
+/**
+밈풀 가져오기 (singleton pattern)
+*/
+
+func MiningBlock() *Block {
+	return miningBlock
 }
 
 /*
@@ -41,6 +53,7 @@ type Block struct {
 block을 생성해줌
 */
 func createBlock(prevHash string, height int, diff int) *Block {
+	fmt.Print("create")
 	blockHeader := &Blockheader{
 		Nonce:         0,
 		PreviouseHash: prevHash,
@@ -52,15 +65,15 @@ func createBlock(prevHash string, height int, diff int) *Block {
 		BlockNumber:   height,
 		TimeStamp:     0,
 	}
-
-	block := &Block{
+	m := MiningBlock()
+	m = &Block{
 		Header: *blockHeader,
 	}
 
-	block.Body = Mempool().TxToConfirm()
-	block.mine()
+	m.Body = Mempool().TxToConfirm()
+	mine()
 	// TODO : block.persist() => 이 타이밍에 pub
-	return block
+	return m
 }
 
 func persistBlock(b *Block) {
@@ -99,14 +112,14 @@ func FindBlock(hash string) (*Block, error) {
 // 		}
 // 	}
 // }
-func (b *Block) mine() {
+func mine() {
+	b := MiningBlock()
 	target := strings.Repeat("0", b.Header.Difficulty)
 	b.quit = make(chan bool)
 	for {
 		select {
 		case <-b.quit:
 			fmt.Println("Mining was stopped")
-			b.quit <- false
 			return
 		default:
 			b.Header.TimeStamp = int(time.Now().Unix())
@@ -122,7 +135,7 @@ func (b *Block) mine() {
 	}
 }
 
-func (b *Block) StopMine() {
-	b.quit <- true
-	close(b.quit)
+func StopMine() {
+	MiningBlock().quit <- true
+	close(MiningBlock().quit)
 }

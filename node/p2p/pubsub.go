@@ -31,17 +31,22 @@ const (
 var (
 	topicNameFlag = flag.String("topicName", "Aolda", "name of topic to join") // flag 이름, 값, 설명
 	topic         *pubsub.Topic
+	topicNode     *pubsub.Topic
+	peerh         host.Host
+	peerID        peer.ID
 )
 
 func PubsubPeers() {
 	fmt.Println(":::::  Pubsub Peers  :::::")
 	flag.Parse()
 	ctx := context.Background()
-
+	Nodectx := context.Background()
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 	if err != nil {
 		panic(err)
 	}
+	peerh = h
+
 	go discoverPeers(ctx, h)
 	addr := fmt.Sprintf("host : %s\n", h.Addrs()[0])
 	parts := strings.Split(addr, "/")
@@ -53,17 +58,36 @@ func PubsubPeers() {
 	if err != nil {
 		panic(err)
 	}
+
+	Nodeps, err := pubsub.NewGossipSub(Nodectx, h)
+	if err != nil {
+		panic(err)
+	} // 개별 node에 대한 NewGossipSub
+
 	topic, err = ps.Join(*topicNameFlag)
 	if err != nil {
 		panic(err)
 	}
-	// go PubMessage(ctx, topic) // pub에 대한 goroutine
+
+	peerID := h.ID()
+	peerIDString := peerID.Pretty()
+
+	topicNode, err = Nodeps.Join(peerIDString)
+	if err != nil {
+		panic(err)
+	} // 개별 node에 대한 NewGossipSub, peerID를 topic으로 만듬
 
 	sub, err := topic.Subscribe()
 	if err != nil {
 		panic(err)
 	}
 	SubMessage(ctx, sub)
+
+	Nodesub, err := topicNode.Subscribe()
+	if err != nil {
+		panic(err)
+	}
+	SubMessage(Nodectx, Nodesub) // peerID를 topic으로 만든 것에 대해 sub listen
 }
 
 func initDHT(ctx context.Context, h host.Host) *dht.IpfsDHT {
@@ -122,6 +146,7 @@ func discoverPeers(ctx context.Context, h host.Host) {
 	}
 	fmt.Println("Peer discovery complete")
 	blockchain.Blockchain() // TODO : 블럭을 요ㅇㅏ고 해됨
+	// blockchain.StopMine()
 }
 
 func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
@@ -203,12 +228,8 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 						// SetValue는 합의 후에
 						// SetValue(functionName, args, res)
 					}
-				case 2:
-					// USER가 API를 사용해 직접 Aolda Node를 호출한 기록
-					// 1. 호출했다는 사실에 대한 tx 2. 호출하고 계산을 마친 후 tx 둘 다 올림? 그래야할듯 ㅇㅇ
-					// 특정 dataform으로 요청이 들어옴
-					// res := compiler.ExecuteJS(transaction.Body.FileHash, transaction.Body.FunctionName, transaction.Body.Arguments)
-					// 위와 비슷하게 실행
+				case 2: // USER가 API를 사용해 직접 Aolda Node를 호출한 기록
+					mempool.AddTx(transaction)
 				case 3: // type1과 type2에 대한 결과값
 					// peer 입장에서는 실행 결과이므로, 걍 mempool에 저장
 					mempool.AddTx(transaction)
@@ -219,12 +240,13 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 		} else if isConvert == blockN {
 			switch messageForBlock.EventName {
 			case SEND_NEWEST_BLOCK:
-				//가장 최신의 block에 대해서 보내기
+				//가장 최신의 block에 대해서 특정 노드에 보내는거?
 			case MAKE_NEW_BLOCK:
 				//local에 number랑 비교해서 추가할건지 말건지
 				// 1. 추가안함 -> blockchain 길이가 더 길거나 같으므로 내것이 더 길다고 보내기(fail)
 
 				// 2. 추가 -> mempool 초기화 후 다시 mine
+				blockchain.StopMine()
 				mempool := blockchain.Mempool()
 				mempool.Clear()
 				// case MAKE_NEW_PEER:
@@ -235,6 +257,8 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 			switch messageForBlocks.EventName {
 			case REQUEST_ALL_BLOCK:
 				//해당 주소로 block 보내기
+				peerID := ConvertToPeerID(messageForBlock.PeerID)
+				SendAllBlocks(peerID)
 			case SEND_ALL_BLOCK:
 				//현재 local에 있는 block를 받은 block으로 바꾸기
 

@@ -1,4 +1,4 @@
-package main
+package ipfs
 
 import (
 	"bytes"
@@ -26,7 +26,6 @@ func IpfsAdd(filename string) {
 }
 
 func IpfsGet(filehash string) error {
-
 	fmt.Print("filehash: ")
 	fmt.Println(filehash)
 	cmd := exec.Command("ipfs", "get", filehash)

@@ -5,6 +5,8 @@ import (
 	"aolda_node/utils"
 	"context"
 	"fmt"
+
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 const (
@@ -18,18 +20,23 @@ const (
 
 type MessageForTx struct {
 	EventName string                  `json:"eventName"`
+	PeerID    string                  `json:"peerid"`
 	Payload   *blockchain.Transaction `json:"payload"`
 }
 
 type MessageForBlock struct {
 	EventName string            `json:"eventName"`
+	PeerID    string            `json:"peerid"`
 	Payload   *blockchain.Block `json:"payload"`
 }
 
 type MessageForBlocks struct {
 	EventName string              `json:"eventName"`
+	PeerID    string              `json:"peerid"`
 	Payload   []*blockchain.Block `json:"payload"`
 }
+
+var psNode *pubsub.PubSub
 
 func PubForTx(eventName string, payload *blockchain.Transaction, ctx context.Context) {
 	fmt.Println("-------------------------------")
@@ -48,7 +55,7 @@ func PubForTx(eventName string, payload *blockchain.Transaction, ctx context.Con
 	if err := topic.Publish(ctx, []byte(message)); err != nil {
 		fmt.Println("### Publish error:", err)
 	}
-	// // pub(m)
+
 }
 
 func PubForBlock(eventName string, payload *blockchain.Block, ctx context.Context) {
@@ -65,7 +72,7 @@ func PubForBlock(eventName string, payload *blockchain.Block, ctx context.Contex
 	if err := topic.Publish(ctx, []byte(message)); err != nil {
 		fmt.Println("### Publish error:", err)
 	}
-	// // pub(m)
+
 }
 
 func PubForBlocks(eventName string, payload []*blockchain.Block, ctx context.Context) {
@@ -82,8 +89,9 @@ func PubForBlocks(eventName string, payload []*blockchain.Block, ctx context.Con
 	if err := topic.Publish(ctx, []byte(message)); err != nil {
 		fmt.Println("### Publish error:", err)
 	}
-	// // pub(m)
+
 }
+
 func SendNewestBlock() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -96,12 +104,6 @@ func RequestAllBlocks() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	PubForBlock(REQUEST_ALL_BLOCK, nil, ctx)
-}
-
-func SendAllBlocks() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	PubForBlocks(SEND_ALL_BLOCK, blockchain.Blocks(blockchain.Blockchain()), ctx)
 }
 
 func NotifyNewBlock(b *blockchain.Block) {
@@ -136,7 +138,8 @@ func handleMsgForBlock(m *MessageForBlock) {
 		}
 	case REQUEST_ALL_BLOCK:
 		fmt.Printf("wants all the blocks.\n")
-		SendAllBlocks()
+		//내 peer id를 넣어서 보내기
+		SendAllBlocks(peerID)
 	case SEND_ALL_BLOCK:
 		// fmt.Printf("Received all the blocks from\n"ey)
 		var payload []*blockchain.Block

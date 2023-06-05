@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultDifficulty  int = 2
+	defaultDifficulty  int = 6
 	difficultyInterval int = 5
 	blockInterval      int = 2
 	allowedRange       int = 2
@@ -42,8 +42,20 @@ func (b *blockchain) restore(data []byte) {
 
 func (b *blockchain) AddBlock() *Block {
 	block := createBlock(b.NewestHash, b.Height+1, getDifficulty(b))
+
 	fmt.Println("AddBlock")
 	fmt.Println(block)
+	b.NewestHash = block.Header.BlockHash
+	b.Height = block.Header.BlockNumber
+	b.CurrentDifficulty = block.Header.Difficulty
+	// TODO : persistBlockhain(b) pub
+	return block
+}
+
+func (b *blockchain) AddBlockFromOther(block *Block) *Block {
+	// block := createBlock(b.NewestHash, b.Height+1, getDifficulty(b))
+	// fmt.Println("AddBlock")
+	// fmt.Println(block)
 	b.NewestHash = block.Header.BlockHash
 	b.Height = block.Header.BlockNumber
 	b.CurrentDifficulty = block.Header.Difficulty
@@ -81,7 +93,7 @@ func Txs(b *blockchain) []*Transaction {
 }
 
 func FindTx(b *blockchain, targetHash string) *Transaction {
-	if b==nil{
+	if b == nil {
 		return nil
 	}
 	for _, tx := range Txs(b) {
@@ -94,7 +106,7 @@ func FindTx(b *blockchain, targetHash string) *Transaction {
 
 func FindTxByBody(b *blockchain, body TransactionBody) *Transaction {
 	for _, tx := range Txs(b) {
-		if reflect.DeepEqual(tx.Body, body)  {
+		if reflect.DeepEqual(tx.Body, body) {
 			return tx
 		}
 	}
@@ -127,13 +139,14 @@ func getDifficulty(b *blockchain) int {
 
 func Blockchain() *blockchain {
 	once.Do(func() {
+		fmt.Print("once")
 		b = &blockchain{
 			Height: 0,
 		}
-		fmt.Println("ehre")
+		fmt.Print(b)
 		checkpoint := dbStorage.LoadChain()
-		fmt.Println("here")
 		if checkpoint == nil {
+			fmt.Print("checkpoint=nil")
 			b.AddBlock()
 		} else {
 			b.restore(checkpoint)
