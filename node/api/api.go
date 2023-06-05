@@ -12,15 +12,15 @@ import (
 	"net/http"
 )
 
-type MyData struct {
-	fileHash     string   `json:"fileHash"`
-	functionName string   `json:"functionName"`
-	args         []string `json:"args"`
+type bodyObject struct {
+	FileHash     string   `json:"fileHash"`
+	FunctionName string   `json:"functionName"`
+	Args         []string `json:"args"`
 }
 
 func Listening() {
 	http.HandleFunc("/emit", emitHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 func emitHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,20 +31,20 @@ func emitHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var bodyData MyData
+		var bodyData bodyObject
 		err = json.Unmarshal(body, &bodyData)
 		if err != nil {
 			http.Error(w, "Error unmarshalling request body", http.StatusBadRequest)
 			return
 		}
 
-		bodyTx, _ := transaction.MakeAPICallTx(bodyData.fileHash, bodyData.functionName, bodyData.args)
+		bodyTx, _ := transaction.MakeAPICallTx(bodyData.FileHash, bodyData.FunctionName, bodyData.Args)
 		pubsub.NotifyNewTx(bodyTx)
 
-		file.IpfsGet(bodyData.fileHash)
-		res := compiler.ExecuteJS(bodyData.fileHash, bodyData.functionName, bodyData.args)
+		file.IpfsGet(bodyData.FileHash)
+		res := compiler.ExecuteJS(bodyData.FileHash, bodyData.FunctionName, bodyData.Args)
 
-		resTx, _ := transaction.MakeCofirmTx(bodyData.fileHash, bodyData.functionName, res, bodyData.args)
+		resTx, _ := transaction.MakeCofirmTx(bodyData.FileHash, bodyData.FunctionName, res, bodyData.Args)
 		pubsub.NotifyNewTx(resTx)
 
 		// type 3 만들기
