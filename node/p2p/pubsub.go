@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	topicNameFlag = flag.String("topicName", "Aolda", "name of topic to join") // flag 이름, 값, 설명
+	topicNameFlag = flag.String("topicName", "AoldaNetwork", "name of topic to join") // flag 이름, 값, 설명
 	topic         *pubsub.Topic
 	topicNode     *pubsub.Topic
 	peerh         host.Host

@@ -1,7 +1,7 @@
 package main
 
 import (
-	//api "aolda_node/api"
+	api "aolda_node/api"
 	contract "aolda_node/contract"
 	database "aolda_node/database"
 	p2p "aolda_node/p2p"
@@ -10,7 +10,7 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(4)
 	defer database.Close()
 
 	go func() {
@@ -18,10 +18,10 @@ func main() {
 		contract.ListenEvent()
 	}()
 
-	// go func() {
-	// 	defer wg.Done()
-	// 	api.Listening()
-	// }()
+	go func() {
+		defer wg.Done()
+		api.Listening()
+	}()
 
 	go func() {
 		database.Boltdb()
