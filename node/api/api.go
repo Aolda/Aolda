@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/rs/cors"
 )
 
 type bodyObject struct {
@@ -20,7 +22,36 @@ type bodyObject struct {
 
 func Listening() {
 	http.HandleFunc("/emit", emitHandler)
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	http.HandleFunc("/upload", uploadHandler)
+	c := cors.Default().Handler(http.DefaultServeMux)
+	log.Fatal(http.ListenAndServe(":8000", c))
+}
+
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		bodyFile, handler, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, "Failed to retrieve file", http.StatusBadRequest)
+			return
+		}
+		defer bodyFile.Close()
+
+		fileHash := file.IpfsAdd(handler.Filename)
+
+		resTx, _ := transaction.MakeFileTx(fileHash)
+		pubsub.NotifyNewTx(resTx)
+
+		jsonData, err := json.Marshal(resTx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// type 3 만들기
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, string(jsonData))
+	} else {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func emitHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +79,7 @@ func emitHandler(w http.ResponseWriter, r *http.Request) {
 		pubsub.NotifyNewTx(resTx)
 
 		// type 3 만들기
+		w.Header().Set("Content-Type", "text/plain")
 		fmt.Fprintf(w, res)
 	} else {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)

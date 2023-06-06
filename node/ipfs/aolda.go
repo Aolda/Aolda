@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-func IpfsAdd(filename string) {
+func IpfsAdd(filename string) string {
 	fmt.Println("IpfsAdd: filename = " + filename)
 	cmd := exec.Command("/bin/sh", "./add.sh", filename)
 	var stdout, stderr bytes.Buffer
@@ -20,11 +20,10 @@ func IpfsAdd(filename string) {
 	} else {
 		fmt.Printf("Output: %s\n", stdout.String())
 	}
-
+	return stdout.String()
 }
 
 func IpfsGet(filehash string) error {
-
 	fmt.Print("filehash: ")
 	fmt.Println(filehash)
 	cmd := exec.Command("ipfs", "get", filehash)
