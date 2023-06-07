@@ -8,7 +8,7 @@ import (
 
 func IpfsAdd(filename string) string {
 	fmt.Println("IpfsAdd: filename = " + filename)
-	cmd := exec.Command("/bin/sh", "./add.sh", filename)
+	cmd := exec.Command("/bin/sh", "./ipfs/add.sh", filename)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -26,7 +26,7 @@ func IpfsAdd(filename string) string {
 func IpfsGet(filehash string) error {
 	fmt.Print("filehash: ")
 	fmt.Println(filehash)
-	cmd := exec.Command("ipfs", "get", filehash)
+	cmd := exec.Command("/bin/sh", "./ipfs/get.sh", filehash)
 	err := cmd.Run()
 
 	if err != nil {
