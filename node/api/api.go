@@ -1,6 +1,8 @@
 package api
 
 import (
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
 	transaction "aolda_node/blockchain"
 	"aolda_node/compiler"
 	file "aolda_node/ipfs"
@@ -24,6 +26,15 @@ type bodyObject struct {
 }
 
 func Listening() {
+	registry := prometheus.NewRegistry()
+	httpRequestsTotal := prometheus.NewCounter(
+    prometheus.CounterOpts{
+        	Name: "http_requests_total",
+        	Help: "Total number of HTTP requests",
+    	},
+	)
+	registry.MustRegister(httpRequestsTotal)
+	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	http.HandleFunc("/emit", emitHandler)
 	http.HandleFunc("/upload", uploadHandler)
 	c := cors.Default().Handler(http.DefaultServeMux)

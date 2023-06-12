@@ -4,7 +4,7 @@ import (
 	api "aolda_node/api"
 	contract "aolda_node/contract"
 	database "aolda_node/database"
-	socket "aolda_node/socket"
+	// socket "aolda_node/socket"
 	p2p "aolda_node/p2p"
 
 	"sync"
@@ -30,7 +30,7 @@ func main() {
 	}()
 
 	go func() {
-		socket.CliStart()
+		// socket.CliStart()
 		defer wg.Done()
 
 		defer wg.Done()
