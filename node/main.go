@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aolda_node/api"
+	api "aolda_node/api"
 	contract "aolda_node/contract"
 	database "aolda_node/database"
 	p2p "aolda_node/p2p"

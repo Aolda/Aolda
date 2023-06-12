@@ -75,7 +75,7 @@ func viewAllDB(db *bolt.DB, err error) {
 }
 
 func updateDB(db *bolt.DB, err error, path string) {
-	log.Println("UODATE DB")
+	log.Println("UPDATE DB")
 	err = db.Update(func(tx *bolt.Tx) error {
 		// Create a bucket to store data in.
 		b, err := tx.CreateBucketIfNotExists([]byte("functions"))
