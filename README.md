@@ -1,4 +1,160 @@
-# Aolda
+# Aolda_dev-kad
+
+## progress
+
+- [X] 1:1 ws network
+- [X] 1:1 msg read / write
+- [X] 1:n multinode p2p network
+- [X] 1:1 db synchronization
+- [ ] Public IP base connection
+- [ ] DHT(Kademlia base)
+- [ ] Distributed DB(Swarm base)
+- [ ] k8s operation
+
+## usage
+
+```
+go run . -port={portNum}
+```
+
+### [POST] {host}/peers
+
+req.body
+```
+{
+    "Address": "localhost",
+    "Port": "3000"
+}
+```
+
+해당 node로 연결 요청
+- call AddPeer()
+
+### [POST] {host}/dbsync
+
+req.body
+```
+{
+    "Address": "localhost",
+    "Port": "3000"
+    "FileName":"add.js,div.js"
+}
+```
+
+- 원하는 파일을 전송
+- 만약 똑같은 이름의 파일이 있다면 덮어쓰기
+
+
+### [GET] {host}/peers
+
+res.body
+```
+[
+    "localhost:3001",
+    "localhost:3002",
+    "localhost:4000"
+]
+```
+
+host node와 연결된 nodes 확인
+- call AllPeers()
+
+### [GET] {host}/dbsync
+```
+[
+    {
+        "modified": "2023-04-13 15:50:45.811246588 +0900 KST",
+        "name": "add.js",
+        "size": 101
+    },
+    {
+        "modified": "2023-04-13 15:50:45.811620125 +0900 KST",
+        "name": "div.js",
+        "size": 100
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871255162 +0900 KST",
+        "name": "math.js",
+        "size": 421
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871394655 +0900 KST",
+        "name": "mod.js",
+        "size": 100
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871517316 +0900 KST",
+        "name": "mul.js",
+        "size": 100
+    },
+    {
+        "modified": "2023-04-07 13:34:51.871648601 +0900 KST",
+        "name": "sub.js",
+        "size": 101
+    }
+]
+```
+- src에 있는 모든 파일 리스트를 return
+
+
+## function description
+
+```
+func CliStart()
+```
+- port 번호 입력
+- call RestStart()
+
+```
+func RestStart()
+```
+- set router
+- listening /peers
+- listening /ws
+
+```
+func peersAPI()
+```
+- called by /peers
+- in POST, call AddPeer()
+- in GET, call AllPeers()
+
+```
+func AddPeer()
+```
+- make websocket connection
+- call initPeer()
+
+```
+func AllPeers()
+```
+- return Peers
+
+```
+func initPeer()
+```
+- return connected Peer
+- save connected Peer in Peers
+- call readListener()
+- call writeListener()
+- call write()
+
+```
+func writeListener()
+```
+- write the message for Peers data to All nodes
+
+```
+func readListener()
+```
+- convert msg to JSON/struct Peer
+- call AddPeer() for new Peer data
+
+```
+func write()
+```
+- return Peers data to go channel(writeListener)
+
 
 
 ## commit message guidline
