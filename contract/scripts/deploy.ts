@@ -1,12 +1,14 @@
-import { ethers } from "hardhat";
-import { AoldaClient } from '../contracts/AoldaClient';
+import { ethers, network } from "hardhat";
+const { setConfig } = require("./config.js");
 
 async function main() {
+  const networkName = network.name;
   const AoldaClient = await ethers.getContractFactory("AoldaClient");
   const aoldaClient = await AoldaClient.deploy();
   await aoldaClient.deployed();
 
-  console.log("aoldaClient : ", aoldaClient.address);
+  setConfig("deployed." + networkName + ".Deposit", aoldaClient.address);
+  console.log("aoldaClient:", aoldaClient.address);
 }
 
 main().catch((error) => {

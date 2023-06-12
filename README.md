@@ -156,6 +156,7 @@ func write()
 - return Peers data to go channel(writeListener)
 
 
+
 ## commit message guidline
 
 ```
@@ -186,3 +187,54 @@ func write()
 - Don't put a period at the end
 - Be used as an imperative and does not use the past tense
 - Explain something and why rather than how
+
+## go-ethereum
+
+```
+solc --optimize --abi ./contracts/AoldaClient.sol -o build
+solc --optimize --bin ./contracts/AoldaClient.sol -o build
+```
+
+- ./contracts/MySmartContract.sol 를 로컬 환경에 맞게 고치셈
+
+```
+abigen --abi=./build/AoldaClient.abi --bin=./build/AoldaClient.bin --pkg=aoldaClient --out=./build/AoldaClient.go
+```
+
+- 위와 동일 해당 bin파일과 abi를 기반으로 .go 파일 생성
+- https://medium.com/nerd-for-tech/smart-contract-with-golang-d208c92848a9 <-----여기 참고>
+
+# 테스트해보기
+
+## 1. 컨트랙트 배포하기
+
+.env.sample 참고해서 .env 작성
+
+```
+cd contract
+npx hardhat run --network ganache scripts/deploy.ts
+```
+
+## 2. 노드 실행하기
+
+```
+cd node
+go run main.go
+```
+
+## 3. 컨트랙트 함수호출하기
+
+```
+cd sender
+node call.sample.js
+```
+
+## 4. body
+
+```json
+{
+  "eventName": "",
+  "payload": {}
+}
+```
+
