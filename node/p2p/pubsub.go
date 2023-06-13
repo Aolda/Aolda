@@ -154,6 +154,7 @@ func discoverPeers(ctx context.Context, h host.Host) {
 func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 	//eventname 보고 Tx면 넣음
 	//api.SubCount()
+	api.SubCounter()
 	for {
 		s, err := sub.Next(ctx)
 		if err != nil {

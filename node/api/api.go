@@ -25,6 +25,7 @@ type bodyObject struct {
 
 func Listening() {
 	registry := prometheus.NewRegistry()
+
 	// httpRequestsTotal := prometheus.NewCounter(
 	// 	prometheus.CounterOpts{
 	// 		Name: "http_requests_total",
@@ -34,21 +35,21 @@ func Listening() {
 	// registry.MustRegister(httpRequestsTotal)
 
 	// transactionCount 카운터 메트릭 생성 및 등록
-	transactionCount = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Name: "transaction_count",
-			Help: "Total number of transactions",
-		},
-	)
-	registry.MustRegister(transactionCount)
-
-	// subCount = prometheus.NewCounter(
+	// transactionCount = prometheus.NewCounter(
 	// 	prometheus.CounterOpts{
 	// 		Name: "transaction_count",
 	// 		Help: "Total number of transactions",
 	// 	},
 	// )
-	// registry.MustRegister(subCount)
+	// registry.MustRegister(transactionCount)
+
+	subCount = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "transaction_count",
+			Help: "Total number of transactions",
+		},
+	)
+	registry.MustRegister(subCount)
 
 	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	// http.HandleFunc("/emit", emitHandler)
@@ -155,4 +156,8 @@ func truncateString(str, keyword string) string {
 func TransactionCounter() {
 	fmt.Println("transactionCount")
 	transactionCount.Inc()
+}
+
+func SubCounter() {
+	subCount.Inc()
 }
