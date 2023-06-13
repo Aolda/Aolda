@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"aolda_node/api"
 	blockchain "aolda_node/blockchain"
 	"aolda_node/compiler"
 	database "aolda_node/database"
@@ -30,7 +29,7 @@ const (
 )
 
 var (
-	topicNameFlag = flag.String("topicName", "AoldaNetwork", "name of topic to join") // flag 이름, 값, 설명
+	topicNameFlag = flag.String("topicName", "AoldaNetwork1", "name of topic to join") // flag 이름, 값, 설명
 	topic         *pubsub.Topic
 	topicNode     *pubsub.Topic
 	peerh         host.Host
@@ -60,23 +59,23 @@ func PubsubPeers() {
 		panic(err)
 	}
 
-	Nodeps, err := pubsub.NewGossipSub(Nodectx, h)
-	if err != nil {
-		panic(err)
-	} // 개별 node에 대한 NewGossipSub
+	// Nodeps, err := pubsub.NewGossipSub(Nodectx, h)
+	// if err != nil {
+	// 	panic(err)
+	// } // 개별 node에 대한 NewGossipSub
 
 	topic, err = ps.Join(*topicNameFlag)
 	if err != nil {
 		panic(err)
 	}
 
-	peerID := h.ID()
-	peerIDString := peerID.Pretty()
+	// peerID := h.ID()
+	// // peerIDString := peerID.Pretty()
 
-	topicNode, err = Nodeps.Join(peerIDString)
-	if err != nil {
-		panic(err)
-	} // 개별 node에 대한 NewGossipSub, peerID를 topic으로 만듬
+	// topicNode, err = Nodeps.Join(peerIDString)
+	// if err != nil {
+	// 	panic(err)
+	// } // 개별 node에 대한 NewGossipSub, peerID를 topic으로 만듬
 
 	sub, err := topic.Subscribe()
 	if err != nil {
@@ -154,7 +153,7 @@ func discoverPeers(ctx context.Context, h host.Host) {
 func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 	//eventname 보고 Tx면 넣음
 	//api.SubCount()
-	api.SubCounter()
+
 	for {
 		s, err := sub.Next(ctx)
 		if err != nil {
@@ -192,7 +191,7 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 			switch messageForTx.EventName {
 			case MAKE_NEW_TX:
 				mempool := blockchain.Mempool()
-
+				//api.SubCounter()
 				// var tx *blockchain.Transaction
 				// errtx := json.Unmarshal([]byte(*messageForTx.Payload), tx)
 				// if errtx != nil {
@@ -275,11 +274,11 @@ func TestThePrometheusPub() {
 	for i := 1; i < 100; i++ {
 		bodyTx, _ := blockchain.MakeAPICallTx("add.js", "add", []string{"1", "2"})
 		NotifyNewTx(bodyTx)
-		api.TransactionCounter()
+		//api.TransactionCounter()
 		res := compiler.ExecuteJS("add.js", "add", []string{"1", "2"})
 
 		resTx, _ := blockchain.MakeCofirmTx("add.js", "add", res, []string{"1", "2"})
-		api.TransactionCounter()
+		//api.TransactionCounter()
 		NotifyNewTx(resTx)
 	}
 

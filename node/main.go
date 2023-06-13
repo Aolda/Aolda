@@ -1,7 +1,6 @@
 package main
 
 import (
-	"aolda_node/api"
 	contract "aolda_node/contract"
 	database "aolda_node/database"
 
@@ -19,10 +18,10 @@ func main() {
 		contract.ListenEvent()
 	}()
 
-	go func() {
-		defer wg.Done()
-		api.Listening()
-	}()
+	// go func() {
+	// 	defer wg.Done()
+	// 	api.Listening()
+	// }()
 
 	go func() {
 		database.Boltdb()
