@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"aolda_node/api"
 	blockchain "aolda_node/blockchain"
 	"aolda_node/compiler"
 	database "aolda_node/database"
@@ -145,12 +146,14 @@ func discoverPeers(ctx context.Context, h host.Host) {
 		}
 	}
 	fmt.Println("Peer discovery complete")
-	blockchain.Blockchain() // TODO : 블럭을 요ㅇㅏ고 해됨
+	TestThePrometheusPub()
+	//blockchain.Blockchain() // TODO : 블럭을 요ㅇㅏ고 해됨
 	// blockchain.StopMine()
 }
 
 func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 	//eventname 보고 Tx면 넣음
+	//api.SubCount()
 	for {
 		s, err := sub.Next(ctx)
 		if err != nil {
@@ -265,6 +268,20 @@ func SubMessage(ctx context.Context, sub *pubsub.Subscription) {
 			}
 		}
 	}
+}
+
+func TestThePrometheusPub() {
+	for i := 1; i < 100; i++ {
+		bodyTx, _ := blockchain.MakeAPICallTx("add.js", "add", []string{"1", "2"})
+		NotifyNewTx(bodyTx)
+		api.TransactionCounter()
+		res := compiler.ExecuteJS("add.js", "add", []string{"1", "2"})
+
+		resTx, _ := blockchain.MakeCofirmTx("add.js", "add", res, []string{"1", "2"})
+		api.TransactionCounter()
+		NotifyNewTx(resTx)
+	}
+
 }
 
 // func printMessagesFrom(ctx context.Context, sub *pubsub.Subscription, receivedJsonData string) {
