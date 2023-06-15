@@ -128,7 +128,6 @@ func ListenEvent() {
 			// fmt.Print(*evmCallTx)
 			p2p.NotifyNewTx(evmCallTx)
 
-			
 			// res := compiler.ExecuteJS(fileName, functionName, args)
 
 			// confirmTx, err := blockchain.MakeCofirmTx(fileName, functionName, res, args)
